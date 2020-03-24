@@ -37,6 +37,7 @@ correr_docker_analisis.sh
 
 # RStudio files
 .Rproj.user/
+.rstudio/
 
 # produced vignettes
 vignettes/*.html
