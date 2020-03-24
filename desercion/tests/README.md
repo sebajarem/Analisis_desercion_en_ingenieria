@@ -1,0 +1,1 @@
+Aquí puede almacenar cualquier caso de prueba para las funciones que ha escrito. Sus archivos de prueba deben usar pruebas de estilo `testthat` para que pueda llamar a la función` test.project () `para ejecutar automáticamente todo su código de prueba.
