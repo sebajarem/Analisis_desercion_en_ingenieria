@@ -1,22 +1,10 @@
 #####################################################
-#		Rama analisis_exploratorio_01
-#   ignore solo de esta rama por ahora
-#####################################################
-/R_template_proyecto_base/
-creador_projectTemplate.R
-
-#####################################################
 #		Datos
 #####################################################
 *.csv
 *.xls
 *.xlsx
 
-#####################################################
-#		scripts o bash local de la maquina
-#       no se sube a github
-#####################################################
-correr_docker_analisis.sh
 
 
 #####################################################
@@ -44,7 +32,6 @@ correr_docker_analisis.sh
 
 # RStudio files
 .Rproj.user/
-.rstudio/
 
 # produced vignettes
 vignettes/*.html
