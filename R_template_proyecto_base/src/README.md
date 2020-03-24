@@ -1,0 +1,2 @@
+Aquí almacenará sus scripts de análisis estadísticos finales. Debe agregar el siguiente código al inicio de cada secuencia de comandos de análisis: `library ('ProjectTemplate); load.project () `. También debe hacer todo lo posible para asegurarse de que cualquier código que se comparta entre los análisis en `src` se mueva al directorio` munge`; si hace eso, puede ejecutar todos los análisis en el directorio `src` en paralelo. Una versión futura de ProjectTemplate proporcionará herramientas para ejecutar automáticamente cada análisis individual de `src` en paralelo.
+
