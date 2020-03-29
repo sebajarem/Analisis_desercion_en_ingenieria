@@ -1,1 +1,0 @@
-carpeta para almacenar los archivos de datos ya procesados

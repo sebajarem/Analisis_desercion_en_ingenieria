@@ -1,2 +1,0 @@
-Aquí puede almacenar cualquier código de preprocesamiento o munging de datos para su proyecto. Por ejemplo, si necesita agregar columnas en tiempo de ejecución, fusionar conjuntos de datos normalizados o censurar globalmente cualquier punto de datos, ese código debe almacenarse en el directorio `munge`. Los scripts de preprocesamiento almacenados en `munge` se ejecutarán secuencialmente cuando llame a` load.project () `, por lo que debe agregar números a los nombres de archivo para indicar su orden secuencial.
-
