@@ -1,11 +1,3 @@
-#####################################################
-#		Rama Master
-#   ignore solo de esta rama por ahora
-#####################################################
-correr_docker_analisis.sh
-/R_template_proyecto_base/
-/kitematic/
-
 
 #####################################################
 #		Datos
