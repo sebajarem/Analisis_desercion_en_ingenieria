@@ -1,3 +1,7 @@
+creador_projectTemplate.R
+/R_template_proyecto_base/*
+correr_docker_analisis.sh
+
 
 #####################################################
 #		Datos
