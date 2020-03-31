@@ -14,8 +14,8 @@ add.config(
   tests = "tests/",
   cache = "cache/",
   
-  versionData="",
+  versionData="0",
   versionDataNro="1",
-  subFoldersIncludes = "data, outputs, graphs, reports, diagnostics, docs, tests",
+  subFoldersIncludes = "data, outputs, graphs, reports, diagnostics, docs, tests, src",
   logFileName="project.log"
 )
