@@ -1,0 +1,3 @@
+Aquí almacenará cualquier archivo que brinde una funcionalidad útil para su trabajo, pero que no constituya un análisis estadístico per se. Específicamente, debe usar el script `lib / helpers.R` para organizar cualquier función que use en su proyecto que no sea lo suficientemente general como para pertenecer a un paquete.
+
+Si tiene una configuración específica del proyecto que le gustaría almacenar en el objeto de configuración, puede especificar eso en `lib / globals.R`. Este es el primer archivo cargado desde `lib`, por lo que cualquier función en` lib`, `munge` o` src` puede hacer referencia a esta configuración simplemente usando el formulario `config $ my_config_var`.
