@@ -74,7 +74,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+#lib/	#lo comento porque en R ProjectTemplate usa una carpeta con ese nombre y no la puedo cambiar porque es automático
 lib64/
 parts/
 sdist/
