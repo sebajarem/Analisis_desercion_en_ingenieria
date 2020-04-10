@@ -10,6 +10,7 @@ args = commandArgs(trailingOnly=TRUE)
 
 cadena = sort(list.dirs(path = "./data"))[-1]
 cadena = str_remove(string = cadena, pattern = "./data/")
+versiones_existentes = cadena
 
 # argumentos
 if (length(args)==0) {
@@ -21,7 +22,7 @@ if (length(args)==0) {
   message("    munge: hace preprocesamiento")
   message("    src: corre archivos source")
   message("    log: genera logueo")
-  message("ejemplo1:   Rscript main_Rscript.R 00_ejemplo_01 data munge src log")
+  message("ejemplo1:   Rscript main_Rscript.R 00_ejemplo_01 data cache munge src log")
   message("ejemplo2:   Rscript main_Rscript.R 00_ejemplo_01 data munge")
   stop("vuelva a ejecutar", call.=FALSE)
 }
@@ -51,13 +52,23 @@ if(any(as.character(args[1]) %in% cadena)){
   stop("vuelva a ejecutar", call.=FALSE)
 }
 
-parametros = c("data", "munge", "src", "log" )
 
 data = ifelse(any("data" %in% args),TRUE,FALSE)
 munge = ifelse(any("munge" %in% args),TRUE,FALSE)
 src = ifelse(any("src" %in% args),TRUE,FALSE)
 log = ifelse(any("log" %in% args),TRUE,FALSE)
+cache = ifelse(any("cache" %in% args),TRUE,FALSE)
 
+
+# genero lista para data ignore que no sea del proyecto seleciconado por la recursividad
+
+# agrego el ignore de otros proyectos
+l_ignore = versiones_existentes[as.character(args[1]) != versiones_existentes]
+l_ignore = str_remove(string = l_ignore, pattern = "./data/")
+l_ignore = str_c(l_ignore, "/, ", sep = "")
+l_ignore = paste(l_ignore, collapse = '')
+
+print(paste("lista ignore:",l_ignore))
 
 load.project(
   versionData = glue("{versionData}"),
@@ -65,8 +76,9 @@ load.project(
   
   data_loading= glue("{data}"), 
   data_loading_header= glue("{data}"),
-  data_ignore="",
-  cache_loading= glue("{data}"),
+  data_ignore= glue("{l_ignore}"),
+  recursive_loading = TRUE,
+  cache_loading= glue("{cache}"),
   
   munging= glue("{munge}"),
   

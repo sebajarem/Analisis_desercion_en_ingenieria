@@ -1,9 +1,9 @@
 version: 0.9.0
 data_loading: TRUE
 data_loading_header: TRUE
-data_ignore:
+data_ignore:  
 cache_loading: TRUE
-recursive_loading: FALSE
+recursive_loading: TRUE
 munging: TRUE
 logging: FALSE
 logging_level: INFO

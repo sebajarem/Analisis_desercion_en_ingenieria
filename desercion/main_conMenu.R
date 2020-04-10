@@ -63,6 +63,11 @@ switch(
       graphics = T,
       choices = opcion_TRUE_FALSE
     )
+    opcion6 = menu(
+      title = "borrar cache ?",
+      graphics = T,
+      choices = opcion_TRUE_FALSE
+    )
   },
   # opcion de crear nueva version
   salida = {
@@ -80,6 +85,13 @@ if(opcion1 == 1){
     l1 = str_c(l[1], l[2], sep = "_")
   }
   versionDataNro= l[3]
+  
+  # agrego el ignore de otros proyectos
+  l_ignore = glue("{opcion2_versiones[{-opcion2}]}")
+  l_ignore = str_remove(string = l_ignore, pattern = "./data/")
+  l_ignore = str_c(l_ignore, "/, ", sep = "")
+  l_ignore = paste(l_ignore, collapse = '')
+  
 }
 if(opcion1 == 2){
   cadena = nombre_nueva_version
@@ -102,8 +114,9 @@ if(opcion1 == 1) {
       
       data_loading= glue("{opcion_TRUE_FALSE[{opcion3}]}"), 
       data_loading_header= glue("{opcion_TRUE_FALSE[{opcion3}]}"),
-      data_ignore="",
-      cache_loading= glue("{opcion_TRUE_FALSE[{opcion3}]}"),
+      data_ignore=glue("{l_ignore}"),
+      recursive_loading = TRUE,
+      cache_loading= glue("{opcion_TRUE_FALSE[{opcion6}]}"),
       
       munging= glue("{opcion_TRUE_FALSE[{opcion4}]}"),
       
