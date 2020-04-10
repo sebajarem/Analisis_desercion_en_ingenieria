@@ -16,6 +16,6 @@ add.config(
   
   versionData="0",
   versionDataNro="1",
-  subFoldersIncludes = "data, outputs, graphs, reports, diagnostics, docs, tests, src",
+  subFoldersIncludes = "data, outputs, graphs, reports, diagnostics, docs, tests, munge, src",
   logFileName="project.log"
 )
