@@ -1,0 +1,2 @@
+# estadisticos de datos iniciales
+
