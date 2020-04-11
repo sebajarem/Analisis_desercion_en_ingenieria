@@ -8,6 +8,10 @@ creador_projectTemplate.R
 *.xls
 *.xlsx
 
+*.RData
+*.rds
+/desercion/cache/*
+
 
 #####################################################
 #		R
