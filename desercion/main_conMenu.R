@@ -45,27 +45,27 @@ switch(
     opcion1 = 1
     opcion2 = menu(
       title = "Versiones existentes",
-      graphics = T,
+      graphics = F,
       choices = opcion2_versiones
       )
     opcion3 = menu(
       title = "cargar data ?",
-      graphics = T,
+      graphics = F,
       choices = opcion_TRUE_FALSE
       )
     opcion4 = menu(
       title = "preprocesar ?",
-      graphics = T,
+      graphics = F,
       choices = opcion_TRUE_FALSE
       )
     opcion5 = menu(
       title = "log ?",
-      graphics = T,
+      graphics = F,
       choices = opcion_TRUE_FALSE
     )
     opcion6 = menu(
       title = "borrar cache ?",
-      graphics = T,
+      graphics = F,
       choices = opcion_TRUE_FALSE
     )
   },
@@ -141,7 +141,7 @@ if(opcion1 == 0) {
 switch(menu(
   title = "correr proyecto ?",
   choices = c("si", "no"),
-  graphics = T
+  graphics = F
   ),
   source("./src/01_correr_version_seleccionada.R"))
 
