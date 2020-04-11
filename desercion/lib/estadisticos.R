@@ -10,7 +10,10 @@ library(openxlsx)
 # nobs, nulos y únicos
 estadisticos_calidad <- function(datos, variables_excluir = NA, generar_xlsx = T, nombre_xlsx = "estadisticos(nobs-nulos-unicos)") {
   
-  datos <- datos %>% select(-variables_excluir)
+  if(!is.na(variables_excluir)){
+    datos <- datos %>% select(-variables_excluir)
+  }
+  
   
   a <- dlookr::diagnose(datos)
 
@@ -66,7 +69,9 @@ estadisticos_calidad <- function(datos, variables_excluir = NA, generar_xlsx = T
 # estadísticos - numéricos
 estadisticos_numericos <- function(datos, variables_excluir = NA, generar_xlsx = T, nombre_xlsx = "estadisticos(numericos)") {
   
-  datos <- datos %>% select(-variables_excluir)
+  if(!is.na(variables_excluir)){
+    datos <- datos %>% select(-variables_excluir)
+  }
   
   b <- dlookr::diagnose_numeric(datos)
   
@@ -125,7 +130,9 @@ estadisticos_numericos <- function(datos, variables_excluir = NA, generar_xlsx =
 # top frecuencias - categóricos
 estadisticos_categoricos <- function(datos, top = 10, variables_excluir = NA, generar_xlsx = T, nombre_xlsx = "estadisticos(categoricos)") {
   
-  datos <- datos %>% select(-variables_excluir)
+  if(!is.na(variables_excluir)){
+    datos <- datos %>% select(-variables_excluir)
+  }
   
   datos <- datos %>% mutate_if(is.factor, as.character)
   
@@ -179,7 +186,7 @@ estadisticos <- function(datos, top = 10, variables_excluir_calidad = NA, variab
   b <- estadisticos_numericos(datos, variables_excluir = variables_excluir_numericos, generar_xlsx = F)
   c <- estadisticos_categoricos(datos, top = top, variables_excluir = variables_excluir_categoricos, generar_xlsx = F)
   
-  if(is.null(a) | is.null(b) | is.null(c)) {
+  if(is.null(a) & is.null(b) & is.null(c)) {
     message("No se han podido generar los estadísticos")
     return(NULL)
   }
