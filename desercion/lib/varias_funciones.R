@@ -3,8 +3,114 @@ describe_variable_tipo = function(df){
   
   df.describe = data_frame(
     variable = colnames(df),
-    tipo = apply(df, MARGIN = 2, FUN = typeof)
+    tipo = sapply(df, typeof)
   )
   
   return(df.describe)
+}
+
+tabla2latex_describe_variables = function(df, 
+                                          directorio = config$path_docs_version_tablas,
+                                          archivo_salida = "default.tex", 
+                                          caption_tabla = NA,
+                                          nombre_data = NA,
+                                          tamanio_fuente = 10){
+  
+  obs = nrow(df)
+  aux = describe_variable_tipo(df)
+  
+  aux.latex = knitr::kable(aux, format = "latex", caption = caption_tabla, booktabs =T,  
+                           label = paste0("tabla_", str_replace_all(nombre_data, pattern = " ", replacement = "_"))) %>%
+    kableExtra::kable_styling(latex_options = c("striped", "hold_position"),
+                              font_size = tamanio_fuente) %>%
+    kableExtra::row_spec(0, bold = T, color = "white", background = "black", align = "c") %>%
+    kableExtra::add_header_above(c(glue("{nombre_data}"), glue("Observaciones: {obs}")))
+  
+  capture.output(aux.latex, file = paste0(directorio, "/",archivo_salida))
+  
+  return(aux.latex)
+  
+}
+
+tabla2latex_dataset = function(df, 
+                      directorio = config$path_docs_version_tablas,
+                      archivo_salida = "default.tex", 
+                      caption_tabla = NA,
+                      nombre_data = NA,
+                      tamanio_fuente = 10){
+  
+  obs = nrow(df)
+  
+  aux.latex = knitr::kable(df, format = "latex", caption = caption_tabla, booktabs =T,  
+                           label = paste0("tabla_", str_replace_all(nombre_data, pattern = " ", replacement = "_"))) %>%
+    kableExtra::kable_styling(latex_options = c("striped", "hold_position"),
+                              font_size = tamanio_fuente) %>%
+    kableExtra::row_spec(0, bold = T, color = "white", background = "black", align = "c") %>%
+    kableExtra::add_header_above(c(glue("{nombre_data}"), glue("Observaciones: {obs}")))
+  
+  capture.output(aux.latex, file = paste0(directorio, "/",archivo_salida))
+  
+  return(aux.latex)
+  
+}
+
+
+tabla2latex = function(df, 
+                               directorio = config$path_docs_version_tablas,
+                               archivo_salida = "default.tex", 
+                               caption_tabla = NA,
+                               nombre_data = NA,
+                               tamanio_fuente = 10){
+  
+  aux.latex = knitr::kable(df, format = "latex", caption = caption_tabla, booktabs =T,  
+                           label = paste0("tabla_", str_replace_all(nombre_data, pattern = " ", replacement = "_"))) %>%
+    kableExtra::kable_styling(latex_options = c("striped", "hold_position"),
+                              font_size = tamanio_fuente) %>%
+    kableExtra::row_spec(0, bold = T, color = "white", background = "black", align = "c")
+  
+  capture.output(aux.latex, file = paste0(directorio, "/",archivo_salida))
+  
+  return(aux.latex)
+  
+}
+
+
+tabla2latex_scale = function(df, 
+                       directorio = config$path_docs_version_tablas,
+                       archivo_salida = "default.tex", 
+                       caption_tabla = NA,
+                       nombre_data = NA,
+                       tamanio_fuente = 10){
+  
+  aux.latex = knitr::kable(df, format = "latex", caption = caption_tabla, booktabs =T,  
+                           label = paste0("tabla_", str_replace_all(nombre_data, pattern = " ", replacement = "_"))) %>%
+    kableExtra::kable_styling(latex_options = c("striped", "hold_position", "scale_down"),
+                              font_size = tamanio_fuente) %>%
+    kableExtra::row_spec(0, bold = T, color = "white", background = "black", align = "c")
+  
+  capture.output(aux.latex, file = paste0(directorio, "/",archivo_salida))
+  
+  return(aux.latex)
+  
+}
+
+
+
+tablalarga2latex = function(df, 
+                       directorio = config$path_docs_version_tablas,
+                       archivo_salida = "default.tex", 
+                       caption_tabla = NA,
+                       nombre_data = NA,
+                       tamanio_fuente = 10){
+  
+  aux.latex = knitr::kable(df, format = "latex", longtable = T, caption = caption_tabla, booktabs =T,  
+                           label = paste0("tabla_", str_replace_all(nombre_data, pattern = " ", replacement = "_"))) %>%
+    kableExtra::kable_styling(latex_options = c("striped", "hold_position", "repeat_header"),
+                              font_size = tamanio_fuente) %>%
+    kableExtra::row_spec(0, bold = T, color = "white", background = "black", align = "c")
+  
+  capture.output(aux.latex, file = paste0(directorio, "/",archivo_salida))
+  
+  return(aux.latex)
+  
 }
