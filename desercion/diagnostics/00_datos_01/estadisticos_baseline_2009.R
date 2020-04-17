@@ -27,13 +27,13 @@ tablalarga2latex(df = baseline_sample,
 
 
 
-mtcars %>%
-  rownames_to_column %>% 
-  gather(var, value, -rowname) %>% 
-  spread(rowname, value) 
-In the even newer version, pivot_wider replaces spread:
-  
-  mtcars %>%
-  rownames_to_column %>% 
-  gather(var, value, -rowname) %>% 
-  pivot_wider(names_from=rowname, values_from=value) 
+# mtcars %>%
+#   rownames_to_column %>% 
+#   gather(var, value, -rowname) %>% 
+#   spread(rowname, value) 
+# In the even newer version, pivot_wider replaces spread:
+#   
+#   mtcars %>%
+#   rownames_to_column %>% 
+#   gather(var, value, -rowname) %>% 
+#   pivot_wider(names_from=rowname, values_from=value) 
