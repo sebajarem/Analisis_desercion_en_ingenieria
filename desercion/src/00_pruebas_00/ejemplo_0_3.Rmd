@@ -1,0 +1,43 @@
+---
+title: "Sample Document"
+output:
+  html_document:
+    toc: true
+    theme: united
+    toc_float: yes
+  html_notebook:
+    code_folding: hide
+    number_sections: yes
+    toc: yes
+    toc_float: yes
+author: "Sebastian Jaremczuk"
+date: 2020-03-31
+---
+
+## titu
+
+```{r}
+print("notebook")
+```
+
+# lo
+
+```{r}
+print("2ndo chunk")
+```
+
+# HTML a LaTeX
+
+para pasar de HTML a LaTeX estuve probando varias opciones. incluso se puede poner en los notebooks en el yaml la opcion q mantenga el .tex, pero la que mejor me resulto es hacer el html y una vez q estoy convencido usar pandoc
+
+opcion: yaml:
+
+output:
+  pdf_document:
+    keep_tex: yes o true
+
+opcion pandoc:
+desde la terminal poner
+
+pandoc --listings -f html -t latex ejemplo.html -o ejemplo.tex
+
