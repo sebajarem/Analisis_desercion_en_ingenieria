@@ -11,7 +11,7 @@ creador_projectTemplate.R
 *.RData
 *.rds
 /desercion/cache/*
-
+/desercion/docs/*/tablas/*
 
 #####################################################
 #		R
