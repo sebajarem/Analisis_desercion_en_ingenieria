@@ -1,0 +1,632 @@
+---
+title: "Análisis de Tablón"
+#params:
+#  encoding: "latin1"
+output:
+  pdf_document:
+    keep_tex: yes
+    #df_print: paged
+    latex_engine: pdflatex
+    pandoc_args: "--listings"
+  html_notebook:
+    code_folding: hide
+    number_sections: yes
+    toc: yes
+    toc_float: yes
+    df_print: paged
+  html_document:
+    toc: true
+    theme: united
+    toc_float: yes
+    df_print: paged
+author: "Sebastian Jaremczuk"
+date: 2020-04-17
+---
+
+
+
+
+```{r include=FALSE}
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+library(stringr)
+library(glue)
+
+```
+
+```{r include=FALSE}
+
+getwd()
+path_base = '/home/rstudio/desercion/'
+
+```
+
+
+```{r include=FALSE}
+# cargo todas las librerias en la carpeta lib
+
+librerias.proyecto.actual = list.files(path = paste0(path_base, 'lib'))
+librerias.proyecto.actual = librerias.proyecto.actual[!(librerias.proyecto.actual %in% c("README.md","globals.R","helpers.R"))]
+librerias.proyecto.actual = str_c(paste0(path_base, 'lib/'), librerias.proyecto.actual, sep = '' )
+librerias.proyecto.actual = librerias.proyecto.actual[str_ends(librerias.proyecto.actual, pattern = ".R") | str_ends(librerias.proyecto.actual, pattern = ".r")]
+# cargo las librerias
+sapply(librerias.proyecto.actual, source)
+
+```
+
+
+### carga de datos
+
+```{r include=FALSE}
+baseline <- read_csv(paste0(path_base,"outputs/00_datos_01/baseline_2009.csv"))
+```
+
+```{r include=FALSE}
+
+# glimpse(baseline)
+
+baseline =
+  baseline %>%
+  select(
+    codigo.alumno = `Codigo Alumno`,
+    Turno_Manana = Turno_Mañana,
+    tipo_de_aprobacion_libre = `Tipo de aprobación_Libre`,
+    tipo_de_aprobacion_cambio_curso = `Tipo de aprobación_Cambio Curso`,
+    tipo_de_aprobacion_promociono = `Tipo de aprobación_Promociono`,
+    edad_al_ingreso = `edad al ingreso`,
+    tipo_de_aprobacion_no_firmo = `Tipo de aprobación_No Firmo`,
+    ciclo_lectivo_de_cursada = `Ciclo Lectivo de Cursada`,
+    tipo_de_aprobacion_firmo = `Tipo de aprobación_Firmo`,
+    cant_resursada_regular = `Cantidad de veces recursada regular`,
+    cant_recursada_regular_No_Recurso = `Descripción de recursada regular_No Recurso`,
+    cant_recursada_regular_Recurso1vez = `Descripción de recursada regular_Recurso 1 Vez`,
+    cant_recursada_regular_Recurso2vez = `Descripción de recursada regular_Recurso 2 Veces`,
+    cant_recursada_regular_Recurso3vez = `Descripción de recursada regular_Recurso 3 Veces`,
+    cant_recursada_regular_Recurso4vez = `Descripción de recursada regular_Recurso 4 Veces`,
+    cant_recursada_regular_Recurso5vez = `Descripción de recursada regular_Recurso 5 Veces`,
+    cant_recursada_regular_RecursoNveces = `Descripción de recursada regular_Recurso n Veces (>5)`,
+    everything()
+    )
+
+baseline$codigo.alumno = as.character(baseline$codigo.alumno)
+baseline$EsTecnico = as.character(baseline$EsTecnico)
+baseline$deserto = as.character(baseline$deserto)
+
+
+```
+
+
+### Análisis Estadístico
+
+A continuación se realiza un breve análisis estadístico sobre como quedan los campos en el tablón "Baseline_2009" después de la integración de la información, agregación de campos y campos calculados:
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=TRUE}
+
+# aux = describe_variable_tipo(baseline)
+# 
+# knitr::kable(aux, booktabs =T,
+#              caption = "Tablon Tipo de Datos",
+#              label = "tablon_tipo_datos") %>%
+#   kableExtra::kable_styling(latex_options = c("striped", "hold_position")) %>%
+#   kableExtra::row_spec(0, bold = T, color = "white", background = "black", align = "c")
+
+
+```
+
+
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+
+aux = estadisticos_calidad(datos = baseline,
+                     variables_excluir = c("codigo.alumno"),
+                     generar_xlsx = F)
+
+# lo dejo sin formato para que elija solo segun la compilacion
+aux.est.cal = 
+  kable(aux, booktabs =T,
+             caption = "Tablón - Análisis Estadístico Numérico",
+             label = "tablon_est_cal") %>%
+  kable_styling(latex_options = c("striped", "hold_position", "scale_down")) %>%
+  row_spec(0, bold = T, color = "white", background = "black", align = "c")
+
+
+aux = estadisticos_numericos(datos = baseline,
+                       variables_excluir = c("codigo.alumno"),
+                       generar_xlsx = F)
+
+aux.est.num1 =
+  knitr::kable(aux[,1:10], booktabs =T, # lo dejo sin formato para que elija solo segun la compilacion
+             caption = "Tablón Análisis Estadístico Numérico",
+             label = "tablon_est_num1") %>%
+  kableExtra::kable_styling(latex_options = c("striped", "hold_position", "scale_down")) %>%
+  kableExtra::row_spec(0, bold = T, color = "white", background = "black", align = "c")
+
+aux.est.num2 =
+  knitr::kable(aux[,c(1,11:16)], booktabs =T, # lo dejo sin formato para que elija solo segun la compilacion
+             caption = "Tablón Análisis Estadístico Numérico",
+             label = "tablon_est_num2") %>%
+  kableExtra::kable_styling(latex_options = c("striped", "hold_position", "scale_down")) %>%
+  kableExtra::row_spec(0, bold = T, color = "white", background = "black", align = "c")
+
+
+aux = estadisticos_categoricos(datos = baseline,
+                         variables_excluir = c("codigo.alumno"),
+                         generar_xlsx = F,
+                         top = 3)
+
+aux.est.cat =
+  knitr::kable(aux, booktabs =T, # lo dejo sin formato para que elija solo segun la compilacion
+             caption = "Tablón Análisis Estadístico categóricas",
+             label = "tablon_est_cat") %>%
+  kableExtra::kable_styling(latex_options = c("striped", "hold_position", "scale_down")) %>%
+  kableExtra::row_spec(0, bold = T, color = "white", background = "black", align = "c")
+
+
+
+```
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+aux.est.cal
+aux.est.cat
+aux.est.num1
+aux.est.num2
+```
+
+##### Dataset Supervisado: Valores en función de la clase
+
+Como es un dataset supervisado, podría ser interesante ver los valores separados por clase. Por lo tanto el dataset y con el objeto solamente de realizar un análisis exploratorio, se divide según la clase y se realizan los estadísticos nuevamente.
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+
+df.SIdeserto =
+  baseline %>%
+  filter(deserto == 1)
+
+df.SIdeserto.est.cal = 
+  estadisticos_calidad(datos = df.SIdeserto,
+                     variables_excluir = c("codigo.alumno"),
+                     generar_xlsx = F)
+
+df.SIdeserto.est.cal = 
+  kable(df.SIdeserto.est.cal, booktabs =T,
+             caption = "Tablón SI Desertores - Análisis Estadístico Numérico",
+             label = "tablon_deserto_est_cal") %>%
+  kable_styling(latex_options = c("striped", "hold_position", "scale_down")) %>%
+  row_spec(0, bold = T, color = "white", background = "black", align = "c")
+
+
+df.SIdeserto.est.num =
+  estadisticos_numericos(datos = df.SIdeserto,
+                       variables_excluir = c("codigo.alumno"),
+                       generar_xlsx = F)
+
+df.SIdeserto.est.num1 =
+  knitr::kable(df.SIdeserto.est.num[,1:10], booktabs =T,
+             caption = "Tablón SI Desertores - Análisis Estadístico Numérico",
+             label = "tablon_deserto_est_num1") %>%
+  kableExtra::kable_styling(latex_options = c("striped", "hold_position", "scale_down")) %>%
+  kableExtra::row_spec(0, bold = T, color = "white", background = "black", align = "c")
+
+df.SIdeserto.est.num2 =
+  knitr::kable(df.SIdeserto.est.num[,c(1,11:16)], booktabs =T,
+             caption = "Tablón SI Desertores - Análisis Estadístico Numérico",
+             label = "tablon_deserto_est_num2") %>%
+  kableExtra::kable_styling(latex_options = c("striped", "hold_position", "scale_down")) %>%
+  kableExtra::row_spec(0, bold = T, color = "white", background = "black", align = "c")
+
+
+df.SIdeserto.est.cat = 
+  estadisticos_categoricos(datos = df.SIdeserto,
+                         variables_excluir = c("codigo.alumno"),
+                         generar_xlsx = F,
+                         top = 3)
+df.SIdeserto.est.cat =
+  knitr::kable(df.SIdeserto.est.cat, booktabs =T, # lo dejo sin formato para que elija solo segun la compilacion
+             caption = "Tablón SI Desertores - Análisis Estadístico categóricas",
+             label = "tablon_deserto_est_cat") %>%
+  kableExtra::kable_styling(latex_options = c("striped", "hold_position", "scale_down")) %>%
+  kableExtra::row_spec(0, bold = T, color = "white", background = "black", align = "c")
+
+
+
+
+```
+
+
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+df.NOdeserto =
+  baseline %>%
+  filter(deserto == 0)
+
+df.NOdeserto.est.cal = 
+  estadisticos_calidad(datos = df.NOdeserto,
+                     variables_excluir = c("codigo.alumno"),
+                     generar_xlsx = F)
+
+df.NOdeserto.est.cal = 
+  kable(df.NOdeserto.est.cal, booktabs =T,
+             caption = "Tablón NO Desertores - Análisis Estadístico Numérico",
+             label = "tablon_no_deserto_est_cal") %>%
+  kable_styling(latex_options = c("striped", "hold_position", "scale_down")) %>%
+  row_spec(0, bold = T, color = "white", background = "black", align = "c")
+
+
+df.NOdeserto.est.num =
+  estadisticos_numericos(datos = df.NOdeserto,
+                       variables_excluir = c("codigo.alumno"),
+                       generar_xlsx = F)
+
+df.NOdeserto.est.num1 =
+  knitr::kable(df.NOdeserto.est.num[,1:10], booktabs =T,
+             caption = "Tablón NO Desertores - Análisis Estadístico Numérico",
+             label = "tablon_no_deserto_est_num1") %>%
+  kableExtra::kable_styling(latex_options = c("striped", "hold_position", "scale_down")) %>%
+  kableExtra::row_spec(0, bold = T, color = "white", background = "black", align = "c")
+
+df.NOdeserto.est.num2 =
+  knitr::kable(df.NOdeserto.est.num[,c(1,11:16)], booktabs =T,
+             caption = "Tablón NO Desertores - Análisis Estadístico Numérico",
+             label = "tablon_no_deserto_est_num2") %>%
+  kableExtra::kable_styling(latex_options = c("striped", "hold_position", "scale_down")) %>%
+  kableExtra::row_spec(0, bold = T, color = "white", background = "black", align = "c")
+
+
+df.NOdeserto.est.cat = 
+  estadisticos_categoricos(datos = df.NOdeserto,
+                         variables_excluir = c("codigo.alumno"),
+                         generar_xlsx = F,
+                         top = 3)
+df.NOdeserto.est.cat =
+  knitr::kable(df.NOdeserto.est.cat, booktabs =T, # lo dejo sin formato para que elija solo segun la compilacion
+             caption = "Tablón NO Desertores - Análisis Estadístico categóricas",
+             label = "tablon_no_deserto_est_cat") %>%
+  kableExtra::kable_styling(latex_options = c("striped", "hold_position", "scale_down")) %>%
+  kableExtra::row_spec(0, bold = T, color = "white", background = "black", align = "c")
+
+
+
+```
+
+
+```{r echo=FALSE}
+
+df.NOdeserto.est.cal
+df.NOdeserto.est.cat
+df.NOdeserto.est.num1
+df.NOdeserto.est.num2
+
+df.SIdeserto.est.cal
+df.SIdeserto.est.cat
+df.SIdeserto.est.num1
+df.SIdeserto.est.num2
+
+```
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+gg_data =
+  baseline %>%
+  select_if(is.numeric)
+
+gg_data =
+  gg_data %>%
+  mutate(
+    deserto = baseline$deserto,
+  ) %>%
+  select(deserto, everything()) %>%
+  gather(
+    key = variable,
+    value = valor,
+    2:ncol(.)
+  )
+  
+
+
+
+
+# armamos los grupos para graficar
+g1 = c("tipo_de_aprobacion_libre", "tipo_de_aprobacion_cambio_curso",
+       "tipo_de_aprobacion_promociono", "tipo_de_aprobacion_no_firmo",
+       "tipo_de_aprobacion_firmo")
+g2 = c("edad_al_ingreso")
+g3 = c("cant_recursada_regular_No_Recurso", "cant_recursada_regular_Recurso1vez",
+       "cant_recursada_regular_Recurso2vez", "cant_recursada_regular_Recurso3vez",
+       "cant_recursada_regular_Recurso4vez", "cant_recursada_regular_Recurso5vez",
+       "cant_recursada_regular_RecursoNveces")
+g4 = c("Aprobado", "noAprobado", "Promociono")
+g5 = c("Nota", "Nota_max_prom")
+g6 = c("Turno_Noche", "Turno_Manana", "Turno_Tarde")
+
+gg_data_grupos =
+  gg_data %>%
+  mutate(
+    grupo = if_else(variable %in% g1, "tipo_de_aprobación",
+                    if_else(variable %in% g2, "edad_al_ingreso",
+                            if_else(variable %in% g3, "Cantidad_Recursadas",
+                                    if_else(variable %in% g4, "cant_aprobados",
+                                            if_else(variable %in% g5, "Notas", 
+                                                    if_else(variable %in% g6, "Turnos", "resto"))))))
+  )
+
+# imprimimos por grupos
+gg_explo_tablon_grupo =
+  ggplot(data = gg_data_grupos %>% filter(grupo != "resto" & grupo != "Cantidad_Recursadas" & grupo != "tipo_de_aprobación" ),
+         mapping = aes( x = variable, y = valor, fill = deserto)) +
+    facet_wrap(~grupo, scales = "free", ncol = 2) +
+      geom_boxplot() +
+      theme_bw() +
+      labs(x = "",
+           y = "")
+
+gg_explo_tablon_tipo_aprob =
+  ggplot(data = gg_data_grupos %>% filter(grupo == "tipo_de_aprobación" ) %>% mutate( variable = str_replace(variable, pattern = "tipo_de_aprobacion_", replacement = "")),
+         mapping = aes( x = variable, y = valor, fill = deserto)) +
+    facet_wrap(~grupo, scales = "free", ncol = 2) +
+      geom_boxplot() +
+      theme_bw() +
+      labs(x = "",
+           y = "") +
+    theme(
+         axis.text.x = element_text(angle=50, hjust=1)
+    )
+
+gg_explo_tablon_tipo_recur =
+  ggplot(data = gg_data_grupos %>% filter(grupo == "Cantidad_Recursadas") %>% mutate( variable = str_replace(variable, pattern = "cant_recursada_regular_", replacement = "")),
+         mapping = aes( x = variable, y = valor, fill = deserto)) +
+    facet_wrap(~grupo, scales = "free", ncol = 2) +
+      geom_boxplot() +
+      theme_bw() +
+      labs(x = "",
+           y = "") +
+    theme(
+         axis.text.x = element_text(angle=50, hjust=1)
+    )
+
+ggsave("./imagenes/gg_explo_tablon_grupo.png", plot = gg_explo_tablon_grupo)
+ggsave("./imagenes/gg_explo_tablon_tipo_aprob.png", plot = gg_explo_tablon_tipo_aprob)
+ggsave("./imagenes/gg_explo_tablon_tipo_recur.png", plot = gg_explo_tablon_tipo_recur)
+
+
+gg_explo_tablon_grupo
+gg_explo_tablon_tipo_aprob
+gg_explo_tablon_tipo_recur
+
+
+
+# l.gg = list()
+# for(i in c(unique(gg_data$variable))){
+#   # print(glue("{i}"))
+#   
+#   gg_data_x =
+#     gg_data %>%
+#     filter(variable == glue("{i}") )
+#   
+#   gg_imagen =
+#     ggplot(data = gg_data_x, mapping = aes( x = variable, y = valor, fill = deserto)) +
+#     geom_boxplot() +
+#     theme_bw() +
+#     labs(x = "", 
+#          y = "")
+#   
+#   l.gg[[i]] = ggplotGrob(gg_imagen)
+#   # print(gg_imagen)
+#   
+# }
+
+# library(gridExtra)
+# grid.arrange(grobs=l.gg, ncol=4)
+
+
+
+```
+
+
+
+#### Observaciones
+
+De las tablas y gráficos anteriores podemos extraer la siguiente información:
+
+* El dataset se encuentra balanceado. 43.88 % de los alumnos del dataset desertó mientras que el 56.12 % sigue en carrera.
+
+* La variable **EsTecnico** tiene un 13.32% de datos nulos. Dependiendo el método que se use podrá tolerarse o no. En los casos que no se pueda tolerar, se tendrá que imputar algún valor o se podrá optar por descartar la variable.
+
+* El valor mínimo de la variable **edad_al_ingreso** es 11. Un valor muy bajo y puede tratarse de un error. Se analizaron la cantidad de casos que existen en que esta variable tiene un valor menor a 17, que es la mínima edad que podría entrar un estudiante a la universidad respetando todos los ciclos lectivos sin adelantar ninguno de las etapas de estudio anteriores, y dicho valor es de 4 observaciones. Las cuales representan una cantidad insignificante respecto del total de observaciones 4558 (0.06%). Por lo tanto al no poder verificarlo por el momento se decide dejarlo.
+
+
+```{r include=FALSE}
+
+baseline %>% filter(edad_al_ingreso < 17)
+
+```
+
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+
+df.corr = 
+  baseline %>%
+  select_if(is.numeric)
+
+# agrego el target y lo pongo como numerico asi se si esta correlacionado tmb con aluna variable
+df.corr =
+  df.corr %>%
+  mutate(
+    deserto = as.numeric(baseline$deserto)
+  )
+
+# names(df.corr)
+
+aux = apply(df.corr, MARGIN = 2, var)
+df_aux = data.frame(variable = names(unlist(aux)), var = unlist(aux))
+row.names(df_aux) = NULL
+# head(df_aux)
+
+
+# df_aux %>% arrange(var)
+
+corr = cor(df.corr)
+# dim(corr)
+
+corr.res =
+  cbind.data.frame(
+    nombrefila = rownames(corr),
+    corr
+  ) %>%
+  gather(
+    key = "nombrecolumna",
+    value = "correl",
+    2:(ncol(corr)+1)
+  ) %>%
+  arrange(desc(correl))
+
+corr.res =
+  corr.res %>%
+  filter(nombrefila != nombrecolumna)
+
+corr.res$correl = round(corr.res$correl, digits = 2)
+
+
+
+
+
+```
+
+#### Correlación entre todas las variables
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+library(corrplot)
+library(RColorBrewer)
+library(gridGraphics)
+library(gridExtra)
+
+labels =
+  data.frame(
+    nombre = row.names(corr),
+    nombre.id = paste0("v",as.character(seq(1:ncol(corr))))
+  ) %>%
+  mutate(
+    leyenda = paste(nombre.id,": ",nombre) %>% str_replace_all(pattern = "cant_recursada_regular_", replacement = "") %>%
+  str_replace_all(pattern = "tipo_de_aprobacion_", replacement = "aprob_"  )
+  ) 
+
+corr.sin.label =
+  corr
+row.names(corr.sin.label) = as.character(labels$nombre.id)
+colnames(corr.sin.label) = as.character(labels$nombre.id)
+
+
+# corrplot(corr = corr.sin.label, type="upper", order="hclust", tl.cex = 0.5, 
+#        # addCoef.col = "black", # Add coefficient of correlation
+#        # number.cex = .4,
+#        tl.col="black", tl.srt=45, #Text label color and rotation
+#        col=brewer.pal(n=8, name="RdYlBu"))
+# # grabo lo que imprimo corrplot
+# grid.echo()
+# P1 <- grid.grab()
+# # grid.draw(P1)
+
+
+# install.packages("ggplotify")
+# library(ggplotify)
+# library(grid)
+# library(gridGraphics)
+
+
+# library(GGally)
+# 
+# ggcorr.all =
+#   ggcorr(corr.label.corto,
+#          hjust = 1, size = 2, color = "grey50",# angle = -45, #texto
+#          nbreaks = 4, palette = "RdGy",
+#          label = TRUE, label_size = 2, label_color = "white" # inside
+#   ) 
+#   theme(
+#     legend.position = c(06,07)
+#   )
+# 
+# ggsave("./imagenes/gg_corr_todas_variables.png", plot = ggcorr.all)
+# 
+# ggcorr.all
+
+nombres = row.names(corr)
+nombres = nombres %>% str_replace_all(pattern = "cant_recursada_regular_", replacement = "") %>%
+  str_replace_all(pattern = "tipo_de_aprobacion_", replacement = "aprob_"  )
+
+corr.label.corto = corr
+row.names(corr.label.corto) = nombres
+colnames(corr.label.corto) = nombres
+
+# install.packages("ggcorrplot", dependencies = T)
+library(ggcorrplot)
+
+ggcorr.all =
+  ggcorrplot(corr.sin.label,
+             hc.order = TRUE, 
+             type = "lower", 
+             lab = TRUE, 
+             lab_size = 2, 
+             method="square",
+             pch = 2,
+             # hc.method = 
+             # colors = RColorBrewer::brewer.pal(n = 4, name = "Dark2"),
+             # colors = c("tomato2", "white", "springgreen3"), 
+             # title="Correlogram of mtcars", 
+             ggtheme=theme_bw
+             )
+  # annotate("text", label = paste("<p>",paste(labels$leyenda, collapse = ''),"<p/>"), x = 1, y = 10)
+  #   theme(axis.title.x=element_blank(),
+  #         axis.text.x=element_blank(),
+  #         axis.ticks.x=element_blank())
+
+tbl = tableGrob(labels[,3], theme = ttheme_minimal(base_size = 8, padding = unit(c(1.2,1.2), "mm")) )
+
+grid.arrange(
+  ggcorr.all,
+  tbl,
+  ncol=2,
+  as.table=TRUE,
+  widths = c(4,1)
+)
+
+ggsave("./imagenes/gg_corr_todas_variables.png", plot = ggcorr.all)
+
+# ggcorr.all
+
+```
+
+
+
+#### Correlación entre las variables y la clase
+
+Si bien la clase es categórica y la mayoría de las variables son numéricas, podemos convertir la clase en númerica convirtiendo los casos positivos en 1 y los negativos en 0. De esta forma podemos analizar por el coeficiente de correlación si es que existen variables predictoras que sigan o se acerquen al comportamiento de la clase. Como veremos en la sigueinte tabla, no hay una relación muy directa entre cada variable individual con la clase convertid en numérica. 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+
+# correlacion con la clase
+
+
+corr.deserto =
+  knitr::kable(corr.res %>%
+                 filter(nombrefila == "deserto") %>%
+                 arrange(desc(abs(correl))),
+               booktabs =T, # lo dejo sin formato para que elija solo segun la compilacion
+             caption = "Correlacion con la clase",
+             label = "tablon_no_deserto_est_cat") %>%
+  kableExtra::kable_styling(latex_options = c("striped", "hold_position")) %>%
+  kableExtra::row_spec(0, bold = T, color = "white", background = "black", align = "c")
+
+corr.deserto
+```
+
+
+
