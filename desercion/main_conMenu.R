@@ -64,7 +64,7 @@ switch(
       choices = opcion_TRUE_FALSE
     )
     opcion6 = menu(
-      title = "borrar cache ?",
+      title = "usar cache ?",
       graphics = F,
       choices = opcion_TRUE_FALSE
     )
