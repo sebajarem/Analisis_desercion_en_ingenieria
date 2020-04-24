@@ -13,6 +13,12 @@ creador_projectTemplate.R
 /desercion/cache/*
 /desercion/docs/*/tablas/*
 
+/desercion/diagnostics/*/*.pdf
+/desercion/diagnostics/*/*.html
+/desercion/diagnostics/*/*.tex
+/desercion/diagnostics/00_datos_01/Analisis_tablon_baseline_2009_files/*
+desercion/diagnostics/00_datos_01/imagenes/*
+
 #####################################################
 #		R
 #####################################################
