@@ -21,6 +21,7 @@ if(str_trim(config$versionData) != ""){
           if(str_detect(l[i], pattern = ".Rmd")){
             rmarkdown::render( input = paste0(path_src_version,"/",l[i]),
                                output_dir = paste0("./reports/",subFolderName),
+                               # output_format = c("pdf_document"))
                                output_format = c("html_notebook", "html_document"))# se tiene que respetar el orden. primero el html_notebook y dsps el html_document
           }
         }

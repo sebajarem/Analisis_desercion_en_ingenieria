@@ -597,6 +597,19 @@ grid.arrange(
   widths = c(4,1)
 )
 
+
+ggcorr.all.leyenda =
+  arrangeGrob(
+    ggcorr.all,
+    tbl,
+    ncol=2,
+    as.table=TRUE,
+    widths = c(4,1)
+  )
+
+ggsave("./imagenes/gg_corr_todas_variables_leyenda.png", plot = ggcorr.all.leyenda)
+
+
 ggsave("./imagenes/gg_corr_todas_variables.png", plot = ggcorr.all)
 
 # ggcorr.all
@@ -628,5 +641,11 @@ corr.deserto =
 corr.deserto
 ```
 
+#### Guardamos tablon
 
+```{r}
+
+saveRDS(baseline, file = paste0(path_base, "outputs/", config$versionData, "_", config$versionDataNro,"/", "baseline.rds"))
+
+```
 

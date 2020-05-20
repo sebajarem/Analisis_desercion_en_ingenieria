@@ -114,3 +114,44 @@ tablalarga2latex = function(df,
   return(aux.latex)
   
 }
+
+
+
+contar_desertores <- function(cluster_membership, datos_cluster, datos_referencia){
+  
+  l =
+    lapply(
+      X = split(row.names(datos_cluster), cluster_membership),
+      FUN = function(x){
+        
+        df_aux =
+          data.frame(codigo.alumno = c(x))
+        
+        df_aux =
+          df_aux %>%
+          inner_join(datos_referencia, by = "codigo.alumno") %>%
+          select(deserto) %>%
+          mutate(
+            deserto = as.character(if_else(deserto == "1", "S", "N"))
+          ) %>%
+          group_by(deserto) %>%
+          dplyr::summarise(
+            cantidad = dplyr::n()
+          )
+        
+        
+      }
+    )
+  
+  
+  dd =
+    tibble(
+      num = 1:length(l),
+      ll = l
+    ) %>%
+    unnest(ll)
+  
+  
+  return(dd)
+  
+}
