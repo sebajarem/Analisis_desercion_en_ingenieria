@@ -1,5 +1,8 @@
 creador_projectTemplate.R
 /R_template_proyecto_base/*
+/bin/*
+.wget-hsts
+
 
 #####################################################
 #		Datos
