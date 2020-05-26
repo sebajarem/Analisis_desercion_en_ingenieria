@@ -1,0 +1,21 @@
+[1] "2020-05-25 01:44:13"
+[1] "2020-05-25 01:44:21"
+Naive Bayes 
+
+3191 samples
+  24 predictor
+   2 classes: '0', '1' 
+
+No pre-processing
+Resampling: Cross-Validated (10 fold, repeated 5 times) 
+Summary of sample sizes: 2872, 2872, 2872, 2872, 2872, 2872, ... 
+Resampling results:
+
+  Accuracy   Kappa    
+  0.7644649  0.5344009
+
+Tuning parameter 'fL' was held constant at a value of 0
+Tuning parameter 'usekernel' was held constant at a value
+ of FALSE
+Tuning parameter 'adjust' was held constant at a value of 0
+

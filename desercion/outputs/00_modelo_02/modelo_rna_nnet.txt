@@ -1,0 +1,35 @@
+[1] "2020-05-25 02:02:44"
+[1] "2020-05-25 02:17:31"
+Neural Network 
+
+3191 samples
+  24 predictor
+   2 classes: '0', '1' 
+
+No pre-processing
+Resampling: Cross-Validated (10 fold, repeated 5 times) 
+Summary of sample sizes: 2872, 2872, 2872, 2872, 2872, 2872, ... 
+Resampling results across tuning parameters:
+
+  size  decay  Accuracy   Kappa    
+   10   1e-04  0.8106530  0.6147202
+   10   1e-01  0.8291467  0.6511910
+   10   5e-01  0.8317153  0.6559242
+   20   1e-04  0.7974289  0.5878392
+   20   1e-01  0.8129765  0.6185282
+   20   5e-01  0.8312780  0.6549912
+   50   1e-04  0.7827620  0.5592801
+   50   1e-01  0.7983750  0.5900319
+   50   5e-01  0.8252596  0.6431264
+   80   1e-04        NaN        NaN
+   80   1e-01        NaN        NaN
+   80   5e-01        NaN        NaN
+  100   1e-04        NaN        NaN
+  100   1e-01        NaN        NaN
+  100   5e-01        NaN        NaN
+  120   1e-04        NaN        NaN
+  120   1e-01        NaN        NaN
+  120   5e-01        NaN        NaN
+
+Accuracy was used to select the optimal model using the largest value.
+The final values used for the model were size = 10 and decay = 0.5.

@@ -1,0 +1,64 @@
+[1] "2020-05-25 01:44:28"
+[1] "2020-05-25 02:02:44"
+Random Forest 
+
+3191 samples
+  24 predictor
+   2 classes: '0', '1' 
+
+No pre-processing
+Resampling: Cross-Validated (10 fold, repeated 5 times) 
+Summary of sample sizes: 2872, 2872, 2872, 2872, 2872, 2872, ... 
+Resampling results across tuning parameters:
+
+  mtry  min.node.size  Accuracy   Kappa    
+  3      2             0.8404912  0.6739686
+  3      3             0.8405527  0.6740057
+  3      4             0.8396123  0.6720415
+  3      5             0.8403025  0.6734910
+  3     10             0.8386105  0.6701693
+  3     15             0.8405527  0.6741285
+  3     20             0.8390488  0.6712037
+  3     30             0.8384849  0.6702136
+  4      2             0.8422449  0.6772098
+  4      3             0.8424947  0.6775605
+  4      4             0.8428090  0.6781889
+  4      5             0.8429338  0.6784048
+  4     10             0.8413058  0.6751851
+  4     15             0.8414330  0.6755460
+  4     20             0.8418701  0.6764876
+  4     30             0.8429996  0.6788436
+  5      2             0.8408041  0.6739026
+  5      3             0.8420570  0.6764881
+  5      4             0.8426859  0.6777624
+  5      5             0.8415564  0.6754806
+  5     10             0.8419957  0.6763888
+  5     15             0.8432496  0.6791018
+  5     20             0.8438772  0.6803578
+  5     30             0.8441895  0.6811606
+  7      2             0.8434998  0.6792750
+  7      3             0.8411193  0.6743661
+  7      4             0.8428732  0.6778354
+  7      5             0.8410562  0.6742545
+  7     10             0.8425598  0.6773305
+  7     15             0.8431252  0.6786521
+  7     20             0.8427490  0.6778689
+  7     30             0.8435010  0.6794244
+
+Tuning parameter 'splitrule' was held constant at a value of gini
+Accuracy was used to select the optimal model using the largest value.
+The final values used for the model were mtry = 5, splitrule = gini and min.node.size = 30.
+Ranger result
+
+Call:
+ ranger::ranger(dependent.variable.name = ".outcome", data = x,      mtry = min(param$mtry, ncol(x)), min.node.size = param$min.node.size,      splitrule = as.character(param$splitrule), write.forest = TRUE,      probability = classProbs, ...) 
+
+Type:                             Classification 
+Number of trees:                  500 
+Sample size:                      3191 
+Number of independent variables:  24 
+Mtry:                             5 
+Target node size:                 30 
+Variable importance mode:         none 
+Splitrule:                        gini 
+OOB prediction error:             15.70 % 
