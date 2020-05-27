@@ -44,5 +44,8 @@ trained_recipe
 datos_train_prep <- bake(trained_recipe, new_data = datos_train)
 datos_test_prep  <- bake(trained_recipe, new_data = datos_test)
 
+saveRDS(datos_train_prep, paste0(getwd(),"/",config$outputs,"baseline_2009_train_prep.rds") )
+saveRDS(datos_test_prep, paste0(getwd(),"/",config$outputs,"baseline_2009_test_prep.rds") )
+
 glimpse(datos_train_prep)
 glimpse(datos_test_prep)
