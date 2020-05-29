@@ -155,3 +155,56 @@ contar_desertores <- function(cluster_membership, datos_cluster, datos_referenci
   return(dd)
   
 }
+
+
+
+## para caret , confusionMatrix
+
+tabla_metricas = function(MatrizConfusion, metodo){
+  
+  cf = MatrizConfusion
+  
+  cf$overall %>% 
+    as.data.frame() %>% 
+    rownames_to_column() %>% 
+    dplyr::rename(
+      "metricas" = 1,
+      "valor" = 2
+    ) %>% 
+    bind_rows(
+      cf$byClass %>% 
+        as.data.frame() %>% 
+        rownames_to_column() %>% 
+        dplyr::rename(
+          "metricas" = 1,
+          "valor" = 2
+        )
+    ) %>% 
+    kable(booktabs =T,
+          caption = glue::glue("Métricas del metodo: {metodo} "),
+          label = glue::glue("metricas_{metodo}"),
+          align = "c") %>%
+    kable_styling(latex_options = c("striped", "hold_position")) %>%
+    row_spec(0, bold = T, color = "white", background = "black", align = "c")
+  
+}
+
+
+tabla_confusionMatrix = function(MatrizConfusion, metodo){
+  
+  cf = MatrizConfusion
+  
+  cf$table %>% 
+    kable(booktabs =T,
+          caption = glue::glue("Matriz de Confusion del metodo: {metodo} "),
+          label = glue::glue("MatrizConf_{metodo}"),
+          align = "c") %>%
+    kable_styling(latex_options = c("striped", "hold_position")) %>%
+    row_spec(0, bold = T, color = "white", background = "black", align = "c") %>% 
+    kableExtra::add_header_above(c("Prediccion","Referencia"," "))
+  
+}
+
+
+
+
