@@ -167,4 +167,3 @@ ggplot(data = rf_rfe_var10, aes(x = reorder(var, media_influencia), y = media_in
 ```
 
 Existe una variable que claramente influye mucho mas en los resultados que los otros predictores.
-
