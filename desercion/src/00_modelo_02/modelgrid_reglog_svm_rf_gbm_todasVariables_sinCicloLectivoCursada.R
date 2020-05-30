@@ -1,11 +1,11 @@
 ###############################################################################
 # MODELO: MODEL GRID
 ###############################################################################
-# con seleccion de varibles y sin la mas importante (otras variables)
+# todas las varibles pero sin la mas importante (otras variables)
 ###############################################################################
 
-ArchivoDeSalida = "modelos_reglog_svm_rf_datos02.txt"
-ArchivoDeSalidaRDS = "modelos_reglog_svm_rf_datos02.rds"
+ArchivoDeSalida = "modelgrid_reglog_rf_gbm_c50_todasVariables_sinCicloLectivoCursada_datos05.txt"
+ArchivoDeSalidaRDS = "modelgrid_reglog_rf_gbm_c50_todasVariables_sinCicloLectivoCursada_datos05.rds"
 
 #  Muchos modelos simultaneamente
 
@@ -39,7 +39,7 @@ grid_modelos <- grid_modelos %>%
   share_settings(
     y = datos_train_prep$deserto,
     # x = datos_train_prep %>% select(-deserto), # todo el dataset
-    x = datos_train_prep %>% select(-deserto) %>% select(rf_rfe$optVariables) %>% select(-ciclo_lectivo_de_cursada), # seleccion variables por rf
+    x = datos_train_prep %>% dplyr::select(-deserto) %>% dplyr::select(-ciclo_lectivo_de_cursada), # seleccion variables por rf
     # x = datos_train_prep %>% select(-deserto) %>% select(), # seleccion varuiables por gbm
     metric = "Accuracy",
     trControl = trainControl(method = "repeatedcv",
@@ -56,12 +56,12 @@ grid_modelos <- grid_modelos %>%
 
 grid_modelos <- grid_modelos %>%
   add_model(
-    model_name = "Reg_logistica",
+    model_name = "Reg_logistica_5",
     method     = "glm",
     family     = binomial(link = "logit")
   ) %>%
   add_model(
-    model_name = "RandomForest",
+    model_name = "RandomForest_5",
     method     = "ranger",
     num.trees  = 500,
     tuneGrid   = expand.grid(
@@ -69,15 +69,22 @@ grid_modelos <- grid_modelos %>%
       min.node.size = c(2, 3, 4, 5, 10, 15, 20, 30),
       splitrule = "gini"
     )
-  ) %>%
+  ) %>% 
   add_model(
-    model_name = "SVM",
-    method = "svmRadial",
-    tuneGrid   = expand.grid(
-      sigma = c(0.001, 0.01, 0.1, 0.5, 1),
-      C = c(1 , 20, 50, 100, 200, 500, 700)
-    )
+    model_name = "GradienBoosting_5",
+    method     = "gbm",
+    distribution = "adaboost",
+    tuneGrid   = expand.grid(interaction.depth = c(1, 2),
+                             n.trees = c(500, 1000, 2000),
+                             shrinkage = c(0.001, 0.01, 0.1),
+                             n.minobsinnode = c(2, 5, 15))
+  ) %>% 
+  add_model(
+    model_name = "C50_5",
+    method     = "C5.0Tree",
+    tuneGrid   = data.frame(parameter = "none")
   )
+
 grid_modelos$models
 
 utils::capture.output(grid_modelos$models,

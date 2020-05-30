@@ -1,0 +1,169 @@
+---
+title: "Analisis de Variables predictoras - sin ciclocursada"
+# params: 
+#   output_dir: "../../reports/"
+#params:
+#  encoding: "latin1"
+output:
+  pdf_document:
+    keep_tex: yes
+    #df_print: paged
+    latex_engine: pdflatex
+    pandoc_args: "--listings"
+  html_notebook:
+    code_folding: hide
+    number_sections: yes
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+    df_print: paged
+  html_document:
+    keep_md: TRUE
+    toc: true
+    theme: united
+    toc_float: yes
+    df_print: paged
+author: "Sebastian Jaremczuk"
+date: 2020-04-17
+# always_allow_html: true # esto es para que siempre permita html por los widgets pero no anda bien el kable ... usar webshot y phantomjs (tampo anduvo bien)
+---
+
+```{r include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, include = TRUE, message = FALSE, warning = FALSE)
+
+```
+
+
+```{r}
+# para que los widget los tome como printscreen cdo hace df
+# install.packages("webshot")
+# webshot::install_phantomjs()
+```
+
+
+
+```{r include=FALSE}
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+library(stringr)
+library(glue)
+
+```
+
+```{r include=FALSE}
+
+getwd()
+path_base = '/home/rstudio/desercion/'
+# saveRDS(config, paste0(path_base, config$outputs ,"config.rds"))
+config = read_rds(paste0(path_base, "outputs/00_modelo_02/config.rds"))
+```
+
+
+
+```{r include=FALSE}
+# cargo todas las librerias en la carpeta lib
+
+librerias.proyecto.actual = list.files(path = paste0(path_base, 'lib'))
+librerias.proyecto.actual = librerias.proyecto.actual[!(librerias.proyecto.actual %in% c("README.md","globals.R","helpers.R"))]
+librerias.proyecto.actual = str_c(paste0(path_base, 'lib/'), librerias.proyecto.actual, sep = '' )
+librerias.proyecto.actual = librerias.proyecto.actual[str_ends(librerias.proyecto.actual, pattern = ".R") | str_ends(librerias.proyecto.actual, pattern = ".r")]
+# cargo las librerias
+sapply(librerias.proyecto.actual, source)
+
+```
+
+
+### carga de datos
+
+
+```{r}
+rf_rfe = read_rds(path = paste0(path_base, config$outputs,"rf_rfe_modelo_seleccion_variables_experimental.rds"))
+
+```
+
+
+```{r}
+rf_rfe
+```
+
+```{r}
+# variables optimas
+rf_rfe$optVariables
+
+
+```
+
+
+```{r}
+
+# Métricas promedio de cada tamaño
+rf_rfe$resample %>% group_by(Variables) %>%
+                    summarise(media_accuracy = mean(Accuracy),
+                              media_kappa = mean(Kappa)) %>%
+                    arrange(desc(media_accuracy)) %>% 
+  head(10) %>% 
+  kable(booktabs =T,
+             caption = "Top 10 Modelos con cantidad de variables seleccionadas según Accuracy",
+             label = "top_10_rfe_accuracy") %>%
+  kable_styling(latex_options = c("striped", "hold_position")) %>%
+  row_spec(0, bold = T, color = "white", background = "black", align = "c")
+
+
+
+```
+
+```{r rfe_evolucion_accuracy}
+
+
+ggplot(data = rf_rfe$results, aes(x = Variables, y = Accuracy)) +
+  geom_line() +
+  scale_x_continuous(breaks  = unique(rf_rfe$results$Variables)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = Accuracy - AccuracySD, ymax = Accuracy + AccuracySD),
+                width = 0.2) +
+  geom_point(data = rf_rfe$results %>% slice(which.max(Accuracy)),
+             color = "red") +
+  theme_bw()
+
+
+```
+
+El mejor resultado se consigue con modelos que tienen las 23 variables mencionadas anteiormente y en el grafico puede verse la evolución de dich métrica en función de la cantidad de variables que usa con su dispersión según todos los modelos generados con esa combinación.
+
+Se puede observar que desde que la cantdiad de variables es 15, es un valor muy próximo al màximo que se consigue con 23 variables. por lo que si se opta por este tipo de dataset y se lo quisiera explicar quizas sería mas sencillo con menos variables aunque sigue siendo una catiadd considerable y dependerá mucho de la interacción entre ellas.
+
+Tras ajustar cada modelo, se recalcula la influencia de cada variable. De esta forma, para cada tamaño de modelo, se obtiene un ranking de la importancia promedio de las variables.
+
+```{r}
+
+rf_rfe_var23 =
+  rf_rfe$variables %>% filter(Variables == 23) %>% group_by(var) %>%
+  summarise(media_influencia = mean(Overall),
+            sd_influencia = sd(Overall)) %>%
+  arrange(desc(media_influencia))
+
+
+rf_rfe_var23 %>% 
+  kable(booktabs =T,
+        caption = "Influencia de variables en el resultado",
+        label = "tf_rfe_influencia_variables_23") %>%
+  kable_styling(latex_options = c("striped", "hold_position")) %>%
+  row_spec(0, bold = T, color = "white", background = "black", align = "c")  
+
+```
+
+```{r influencia_de_variables_23}
+
+ggplot(data = rf_rfe_var23, aes(x = reorder(var, media_influencia), y = media_influencia)) +
+  geom_line() +
+  geom_col() +
+  scale_x_discrete(breaks  = unique(rf_rfe_var23$var)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = media_influencia - sd_influencia, ymax = media_influencia + sd_influencia),
+                width = 0.2) +
+  coord_flip() +
+  theme_bw()
+
+```
+

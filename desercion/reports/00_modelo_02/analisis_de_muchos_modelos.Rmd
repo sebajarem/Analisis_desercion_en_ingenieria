@@ -101,6 +101,18 @@ grid_modelos_4var = read_rds(path = paste0(path_base,config$outputs, ArchivoDeSa
 
 ```
 
+```{r}
+
+
+grid_modelos_sinCicloLectivo = read_rds(path = paste0(path_base,config$outputs, "modelos_reglog_svm_rf_datos02.rds"))
+
+grid_modelos_sinCicloLectivo_knn_gbm = read_rds(path = paste0(path_base,config$outputs, "modelos_knn_gbm_datos03.rds"))
+
+grid_modelos_allvars_sinciclo = read_rds(path = paste0(path_base,config$outputs, "modelgrid_reglog_rf_gbm_c50_todasVariables_sinCicloLectivoCursada_datos05.rds"))
+
+```
+
+
 
 ```{r}
 
@@ -124,6 +136,7 @@ library(MASS)
 library(C50)
 library(kernlab)
 library(nnet)
+library(modelgrid)
 
 
 predicciones <- extractPrediction(
@@ -789,6 +802,262 @@ tabla_metricas(cf, metodo)
 ```
 
 
+
+
+
+
+
+
+
+
+
+# Modelos con Dataset sin variable ciclo_lectivo_de_cursada
+
+En este caso, se generan algunos modelos pero usando el dataset sin la variable que mayor relevancia tomaba para los modelos anteriores (sin "ciclo_lectivo_de_cursada")
+
+Los modelos seleccionados para estas pruebas son: Regresión logística, RandomForest, knn y GradientBoosting.
+
+```{r}
+
+
+
+
+grid_modelos_sinCicloLectivo <- grid_modelos_sinCicloLectivo %>%
+                remove_model(model_name = "SVM")
+
+
+
+grid_modelos_sinCicloLectivo_knn_gbm <- grid_modelos_sinCicloLectivo_knn_gbm %>%
+                remove_model(model_name = "KNN_3")
+
+
+names(grid_modelos_sinCicloLectivo$model_fits)
+names(grid_modelos_sinCicloLectivo_knn_gbm$model_fits)
+
+
+grid_modelos_sinCicloLectivo_knn_gbm$model_fits
+
+
+grid_modelos_sinCicloLectivo$model_fits
+```
+
+
+## Determinar parámetros
+
+Las grillas de preubas de parámetros es igual para cada modelo que los mencionados anteriormente las secciones de cada modelo por separado.
+
+Se detallan los nuevos parámetros óptimos encontrados:
+RandomForest
+mtry = 3, splitrule = gini and min.node.size = 30
+Reg_logistica
+(sin parametros)
+gbm
+n.trees = 2000, interaction.depth = 2, shrinkage = 0.01 y n.minobsinnode = 15
+
+
+```{r}
+
+# names(grid_modelos_4var$model_fits)
+# 
+# grid_modelos_4var <- grid_modelos_4var %>%
+#                 remove_model(model_name = "SVM")
+
+grid_modelos_sinCicloLectivo$model_fits
+grid_modelos_sinCicloLectivo_knn_gbm$model_fits
+
+
+```
+
+
+
+```{r}
+
+# grid_modelos_4var$model_fits
+
+predicciones3 <- extractPrediction(
+                  models = list( RandomForest_3= grid_modelos_sinCicloLectivo$model_fits$RandomForest,
+                                 Reg_Logistica_3= grid_modelos_sinCicloLectivo$model_fits$Reg_logistica),
+                  testX = datos_test_prep[,which(colnames(datos_test_prep) != "deserto")],
+                  testY = as.factor(datos_test_prep$deserto)
+                  )
+
+predicciones4 <- extractPrediction(
+                  models = list( #KNN_3 = grid_modelos_sinCicloLectivo_knn_gbm$model_fits$KNN_3,
+                                 GBM_3 = grid_modelos_sinCicloLectivo_knn_gbm$model_fits$GradienBoosting_3),
+                  testX = datos_test_prep[,which(colnames(datos_test_prep) != "deserto")],
+                  testY = as.factor(datos_test_prep$deserto)
+                  )
+
+# table(is.na(predicciones3$pred))
+
+
+```
+
+
+
+## Modelar
+
+Los valores de Accuracy obtenidos en entrenamiento:
+
+Random Forest
+0.7720178 (con validation)
+0.7731119 (usando todo train)
+Reg_logistica
+0.7532915
+0.7558759
+gbm
+0.7510579
+0.7919148
+
+
+
+```{r}
+
+grid_modelos_sinCicloLectivo$model_fits$RandomForest$finalModel$confusion.matrix
+
+1- grid_modelos_sinCicloLectivo$model_fits$RandomForest$finalModel$prediction.error
+
+```
+
+```{r}
+grid_modelos_sinCicloLectivo$model_fits$Reg_logistica$finalModel
+
+unique(predicciones3$object)
+
+metodo = "Reg_Logistica_3"
+
+cf = confusionMatrix(data = predicciones3 %>% filter(object == "Reg_Logistica_3") %>% 
+                  filter(dataType == "Training") %>% pull(pred) ,
+                reference = datos_train_prep %>% pull(deserto),
+                positive = "1")
+
+metodo = "Reg_logistica_3-Training"
+tabla_confusionMatrix(cf, metodo)
+tabla_metricas(cf, metodo)
+
+```
+
+
+
+```{r}
+grid_modelos_sinCicloLectivo_knn_gbm$model_fits$GradienBoosting_3$finalModel
+
+unique(predicciones4$object)
+
+metodo = "GBM_3"
+
+cf = confusionMatrix(data = predicciones4 %>% filter(object == "GBM_3") %>% 
+                  filter(dataType == "Training") %>% pull(pred) ,
+                reference = datos_train_prep %>% pull(deserto),
+                positive = "1")
+
+metodo = "GBM_3-Training"
+tabla_confusionMatrix(cf, metodo)
+tabla_metricas(cf, metodo)
+```
+
+
+
+## describir el modelo
+
+con Test
+
+RandomFores
+0.7717630
+Reg_Logistica
+0.7439649
+gbm
+0.6949525
+
+
+```{r}
+
+# unique(predicciones3$object)
+
+metodo = "RandomForest_3"
+
+
+cf = confusionMatrix(data = predicciones3 %>% filter(object == "RandomForest_3") %>% 
+                  filter(dataType == "Test") %>% pull(pred) ,
+                reference = datos_test_prep %>% pull(deserto),
+                positive = "1")
+
+tabla_confusionMatrix(cf, metodo)
+tabla_metricas(cf, metodo)
+
+```
+
+
+```{r}
+
+# unique(predicciones2$dataType)
+
+metodo = "Reg_Logistica_3"
+
+cf = confusionMatrix(data = predicciones3 %>% filter(object == "Reg_Logistica_3") %>% 
+                  filter(dataType == "Test") %>% pull(pred) ,
+                reference = datos_test_prep %>% pull(deserto),
+                positive = "1")
+
+tabla_confusionMatrix(cf, metodo)
+tabla_metricas(cf, metodo)
+
+```
+
+
+
+```{r}
+
+metodo = "GBM_3"
+
+
+cf = confusionMatrix(data = predicciones4 %>% filter(object == "GBM_3") %>% 
+                  filter(dataType == "Test") %>% pull(pred) ,
+                reference = datos_test_prep %>% pull(deserto),
+                positive = "1")
+
+tabla_confusionMatrix(cf, metodo)
+tabla_metricas(cf, metodo)
+
+```
+
+# modelos que usan todas las variables menos la mas importante
+
+```{r}
+
+grid_modelos_allvars_sinciclo = read_rds(path = paste0(path_base,config$outputs, "modelgrid_reglog_rf_gbm_c50_todasVariables_sinCicloLectivoCursada_datos05.rds"))
+
+
+predicciones5 <- extractPrediction(
+                  models = grid_modelos_allvars_sinciclo$model_fits,
+                  testX = datos_test_prep[,which(colnames(datos_test_prep) != "deserto")],
+                  testY = as.factor(datos_test_prep$deserto)
+                  )
+
+modelo_svm_sinciclo = read_rds(path = paste0(path_base,config$outputs, "modelos_svm_datos_07.rds"))
+
+variables_predictoras = colnames(modelo_svm_sinciclo$trainingData)
+
+predicciones6 <- extractPrediction(
+                  models = list(SVM_5 = modelo_svm_sinciclo),
+                  testX = datos_test_prep[,which(colnames(datos_test_prep) %in% c(variables_predictoras))],
+                  testY = as.factor(datos_test_prep$deserto)
+                  )
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
 # COMPARAR MODELOS
 
 para compara modelos se unen los datsets de predicciones
@@ -798,7 +1067,11 @@ para compara modelos se unen los datsets de predicciones
 pred =
   dplyr::bind_rows(
     predicciones %>% mutate_if(is.factor, as.character),
-    predicciones2 %>% mutate_if(is.factor, as.character)
+    predicciones2 %>% mutate_if(is.factor, as.character),
+    predicciones3 %>% mutate_if(is.factor, as.character),
+    # predicciones4 %>% mutate_if(is.factor, as.character)
+    predicciones5 %>% mutate_if(is.factor, as.character),
+    predicciones6 %>% mutate_if(is.factor, as.character)
   )
 
 
@@ -819,7 +1092,12 @@ metricas_predicciones <-
 
 metricas_predicciones %>%
   spread(key = dataType, value = accuracy) %>%
-  arrange(desc(Test))
+  arrange(desc(Test)) %>% 
+  kable(booktabs =T,
+             caption = "Resumen comparativo de algunos los modelos empleados",
+             label = "cuadro_comparativo-modelos") %>%
+  kable_styling(latex_options = c("striped", "hold_position")) %>%
+  row_spec(0, bold = T, color = "white", background = "black", align = "c")
 
 
 ```
@@ -828,21 +1106,33 @@ metricas_predicciones %>%
 
 
 ```{r}
+
+# gg_aux =
 ggplot(data = metricas_predicciones,
        aes(x = reorder(object, accuracy), y = accuracy,
            color = dataType, label = round(accuracy, 2))) +
-  geom_point(size = 10) +
+  geom_point(size = 7, shape = 22, alpha = 0.5, aes(fill = dataType)) +
+  # geom_point(size = 5, shape = 22) +
+  # geom_bar(stat = "identity", position = "dodge2", aes(fill = NA) ) +
   scale_color_manual(values = c("darkblue", "darkgreen")) +
-  geom_text(color = "white", size = 3) +
+  scale_fill_manual(values = c("darkblue", "darkgreen")) +
+  # geom_text(color = "black", size = 3 ) +
+  geom_text(size = 3, position = position_nudge(y = if_else(metricas_predicciones$dataType == "Test", -0.02, 0.02)), mapping = aes(label= round(accuracy,2))) +
+  # geom_label(size = 3, position = position_nudge(y = if_else(metricas_predicciones$dataType == "Test", -0.05, 0.05)), mapping = aes(label= round(accuracy,2))) +
   # scale_y_continuous(limits = c(0, 1)) +
   # Accuracy basal
   geom_hline(yintercept = 0.56, linetype = "dashed") +
-  annotate(geom = "text", y = 0.57, x = 5.5, label = "Accuracy clase mayoritaria 0.56", angle = 90) +
-  coord_cartesian(ylim = c(0.5,1)) +
+  annotate(geom = "text", y = 0.57, x = 6, label = "Accuracy clase mayoritaria 0.56", angle = 90) +
   coord_flip() +
   labs(title = "Accuracy de entrenamiento y test", 
        x = "modelo") +
   theme_bw() + 
   theme(legend.position = "bottom")
+# agrego los labels (los valores son relativos a el punto en cuestion)
+# gg_aux +
+#     geom_label(size = 3,  nudge_y = if_else(gg_aux$data$dataType == "Test", -0.05, 0.05 ), aes(label= round(accuracy,2)))
+
+
+
 ```
 
