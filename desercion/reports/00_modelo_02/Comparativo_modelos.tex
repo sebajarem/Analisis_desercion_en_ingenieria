@@ -113,29 +113,26 @@ la capacidad que tiene un modelo al predecir nuevas observaciones.
 
 \caption{\label{tab:cuadro_comparativo-modelos}Resumen comparativo de algunos los modelos empleados}
 \centering
-\begin{tabular}[t]{lrr}
+\begin{tabular}[t]{cccc}
 \toprule
-\rowcolor{black}  \multicolumn{1}{c}{\textcolor{white}{\textbf{object}}} & \multicolumn{1}{c}{\textcolor{white}{\textbf{Test}}} & \multicolumn{1}{c}{\textcolor{white}{\textbf{Training}}}\\
+\rowcolor{black}  \multicolumn{1}{c}{\textcolor{white}{\textbf{object}}} & \multicolumn{1}{c}{\textcolor{white}{\textbf{Test}}} & \multicolumn{1}{c}{\textcolor{white}{\textbf{Training}}} & \multicolumn{1}{c}{\textcolor{white}{\textbf{dataset}}}\\
 \midrule
-\rowcolor{gray!6}  SVMradial & 0.8419898 & 0.8511438\\
-RandomForest & 0.8405267 & 0.9103729\\
-\rowcolor{gray!6}  rf & 0.8383321 & 0.9200877\\
-boosting & 0.8361375 & 0.8740207\\
-\rowcolor{gray!6}  logistic & 0.8354060 & 0.8420558\\
+\rowcolor{gray!6}  SVMradial & 0.8419898 & 0.8511438 & DataSet-Completo\\
+RandomForest & 0.8405267 & 0.9103729 & DataSet-Alternativa1\\
+\rowcolor{gray!6}  rf & 0.8383321 & 0.9200877 & DataSet-Completo\\
+boosting & 0.8361375 & 0.8740207 & DataSet-Completo\\
+\rowcolor{gray!6}  logistic & 0.8354060 & 0.8420558 & DataSet-Completo\\
 \addlinespace
-Reg\_logistica & 0.8339429 & 0.8345346\\
-\rowcolor{gray!6}  arbol & 0.8324799 & 0.8552178\\
-LDA & 0.8266277 & 0.8301473\\
-\rowcolor{gray!6}  KNN & 0.8039503 & 0.8198057\\
-RandomForest\_5 & 0.7849305 & 0.9674083\\
+Reg\_logistica & 0.8339429 & 0.8345346 & DataSet-Alternativa1\\
+\rowcolor{gray!6}  arbol & 0.8324799 & 0.8552178 & DataSet-Completo\\
+LDA & 0.8266277 & 0.8301473 & DataSet-Completo\\
+\rowcolor{gray!6}  KNN & 0.8039503 & 0.8198057 & DataSet-Completo\\
+RandomForest\_5 & 0.7849305 & 0.9674083 & DataSet-Alternativa2\\
 \addlinespace
-\rowcolor{gray!6}  SVM\_5 & 0.7820044 & 0.7988092\\
-RandomForest\_3 & 0.7717630 & 0.8686932\\
-\rowcolor{gray!6}  Reg\_logistica\_5 & 0.7717630 & 0.7768725\\
-C50\_5 & 0.7534748 & 0.8147916\\
-\rowcolor{gray!6}  GradienBoosting\_5 & 0.7520117 & 0.7963021\\
-\addlinespace
-Reg\_Logistica\_3 & 0.7439649 & 0.7558759\\
+\rowcolor{gray!6}  SVM\_5 & 0.7820044 & 0.7988092 & DataSet-Alternativa2\\
+Reg\_logistica\_5 & 0.7717630 & 0.7768725 & DataSet-Alternativa2\\
+\rowcolor{gray!6}  C50\_5 & 0.7534748 & 0.8147916 & DataSet-Alternativa2\\
+GradienBoosting\_5 & 0.7520117 & 0.7963021 & DataSet-Alternativa2\\
 \bottomrule
 \end{tabular}
 \end{table}

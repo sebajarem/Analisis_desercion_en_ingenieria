@@ -116,28 +116,32 @@ Este análisis se realiza con todos los modelos y sus variantes usando distintos
 ## Métricas de valicación
 Las métricas obtenidas mediante validación (cv, etc) son estimaciones de la capacidad que tiene un modelo al predecir nuevas observaciones. 
 
-
-
-
-
-
-
-
-
 ```{r}
 metricas_predicciones <- 
   pred %>%
-  filter(object != "NNET") %>% 
+  filter(object != "NNET") %>%
+  filter(object != "RandomForest_3") %>% 
+  filter(object != "Reg_Logistica_3") %>% 
    mutate(acierto = ifelse(obs == pred, TRUE, FALSE)) %>%
    group_by(object, dataType) %>%
    summarise(accuracy = mean(acierto))
 
+ds_completo = c("SVMradial", "rf", "boosting", "logistic", "arbol", "LDA", "KNN")
+ds_seleccionvars = c("RandomForest", "Reg_logistica")
+ds_sinciclo = c("RandomForest_5", "SVM_5", "Reg_logistica_5", "C50_5", "GradienBoosting_5")
+
 metricas_predicciones %>%
   spread(key = dataType, value = accuracy) %>%
+  mutate(
+    dataset = if_else(object %in% ds_completo, "DataSet-Completo",
+                      if_else(object %in% ds_seleccionvars, "DataSet-Alternativa1",
+                              if_else(object %in% ds_sinciclo, "DataSet-Alternativa2", "error")))
+  ) %>% 
   arrange(desc(Test)) %>% 
   kable(booktabs =T,
              caption = "Resumen comparativo de algunos los modelos empleados",
-             label = "cuadro_comparativo-modelos") %>%
+             label = "cuadro_comparativo-modelos",
+        align = "c") %>%
   kable_styling(latex_options = c("striped", "hold_position")) %>%
   row_spec(0, bold = T, color = "white", background = "black", align = "c")
 
