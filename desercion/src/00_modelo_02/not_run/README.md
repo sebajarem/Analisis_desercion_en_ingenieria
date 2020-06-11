@@ -1,0 +1,1 @@
+Los scripts o archivos en esta carpeta no se van a ejecutar.

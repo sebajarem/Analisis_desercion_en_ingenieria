@@ -1,0 +1,28 @@
+---
+title: "Sample Document"
+output:
+  html_document:
+    toc: true
+    theme: united
+    toc_float: yes
+  html_notebook:
+    code_folding: hide
+    number_sections: yes
+    toc: yes
+    toc_float: yes
+author: "Sebastian Jaremczuk"
+date: 2020-03-31
+---
+
+## titu
+
+```{r}
+print("notebook")
+```
+
+# lo
+
+```{r}
+print("2ndo chunk")
+```
+

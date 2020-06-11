@@ -1,0 +1,62 @@
+[1] "2020-05-25 01:44:21"
+[1] "2020-05-25 01:44:28"
+Generalized Linear Model 
+
+3191 samples
+  24 predictor
+   2 classes: '0', '1' 
+
+No pre-processing
+Resampling: Cross-Validated (10 fold, repeated 5 times) 
+Summary of sample sizes: 2872, 2872, 2872, 2872, 2872, 2872, ... 
+Resampling results:
+
+  Accuracy   Kappa    
+  0.8370451  0.6640431
+
+
+Call:
+NULL
+
+Deviance Residuals: 
+    Min       1Q   Median       3Q      Max  
+-4.6987  -0.5650  -0.2177   0.2764   2.9822  
+
+Coefficients: (1 not defined because of singularities)
+                                   Estimate Std. Error z value Pr(>|z|)    
+(Intercept)                         0.19916    0.17002   1.171 0.241425    
+Turno_Manana                       -0.11839    0.08164  -1.450 0.147049    
+tipo_de_aprobacion_libre            0.25795    0.06929   3.723 0.000197 ***
+tipo_de_aprobacion_cambio_curso    -0.03145    0.05751  -0.547 0.584462    
+tipo_de_aprobacion_promociono      -0.56523    0.73182  -0.772 0.439902    
+edad_al_ingreso                     0.05958    0.06363   0.936 0.349063    
+tipo_de_aprobacion_no_firmo        -0.14436    0.16954  -0.852 0.394488    
+ciclo_lectivo_de_cursada           -3.00698    0.18112 -16.602  < 2e-16 ***
+tipo_de_aprobacion_firmo           -2.66744    0.35457  -7.523 5.36e-14 ***
+cant_resursada_regular              0.17558    0.06226   2.820 0.004799 ** 
+cant_recursada_regular_No_Recurso   2.98696    0.35175   8.492  < 2e-16 ***
+cant_recursada_regular_Recurso1vez  0.87215    0.13298   6.558 5.44e-11 ***
+cant_recursada_regular_Recurso2vez  0.45362    0.10201   4.447 8.71e-06 ***
+cant_recursada_regular_Recurso3vez  0.33130    0.08042   4.119 3.80e-05 ***
+cant_recursada_regular_Recurso4vez  0.31818    0.07013   4.537 5.71e-06 ***
+Turno_Tarde                        -0.09447    0.06197  -1.524 0.127394    
+Turno_Noche                              NA         NA      NA       NA    
+Aprobado                           -0.77000    0.22058  -3.491 0.000482 ***
+Promociono                         -0.21699    0.72904  -0.298 0.765984    
+noAprobado                         -0.18922    0.09432  -2.006 0.044835 *  
+Nota                                0.23356    0.19245   1.214 0.224882    
+Nota_max_prom                      -0.04499    0.18072  -0.249 0.803380    
+EsTecnico_X1                        0.01100    0.12912   0.085 0.932087    
+EsTecnico_SinDato                   0.54663    0.19660   2.780 0.005428 ** 
+Sexo_M                              0.04451    0.15903   0.280 0.779542    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+(Dispersion parameter for binomial family taken to be 1)
+
+    Null deviance: 4375.6  on 3190  degrees of freedom
+Residual deviance: 2214.3  on 3167  degrees of freedom
+AIC: 2262.3
+
+Number of Fisher Scoring iterations: 7
+

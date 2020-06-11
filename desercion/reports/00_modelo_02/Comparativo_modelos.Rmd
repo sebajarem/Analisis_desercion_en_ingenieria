@@ -1,0 +1,205 @@
+---
+title: "Comparativo de Modelos"
+# params: 
+#   output_dir: "../../reports/"
+#params:
+#  encoding: "latin1"
+output:
+  pdf_document:
+    keep_tex: yes
+    #df_print: paged
+    latex_engine: pdflatex
+    pandoc_args: "--listings"
+  html_notebook:
+    code_folding: hide
+    number_sections: yes
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+    df_print: paged
+  html_document:
+    keep_md: TRUE
+    toc: true
+    theme: united
+    toc_float: yes
+    df_print: paged
+author: "Sebastian Jaremczuk"
+date: 2020-04-17
+# always_allow_html: true # esto es para que siempre permita html por los widgets pero no anda bien el kable ... usar webshot y phantomjs (tampo anduvo bien)
+---
+
+```{r include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, include = TRUE, message = FALSE, warning = FALSE)
+
+```
+
+
+```{r}
+# para que los widget los tome como printscreen cdo hace df
+# install.packages("webshot")
+# webshot::install_phantomjs()
+```
+
+
+
+```{r include=FALSE}
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+library(stringr)
+library(glue)
+
+```
+
+
+
+```{r}
+library(caret)
+library(randomForest)
+library(ranger)
+library(gbm)
+library(klaR)
+library(MASS)
+library(C50)
+library(kernlab)
+library(nnet)
+library(modelgrid)
+
+```
+
+
+
+
+```{r include=FALSE}
+
+getwd()
+path_base = '/home/rstudio/desercion/'
+# saveRDS(config, paste0(path_base, config$outputs ,"config.rds"))
+config = read_rds(paste0(path_base, "outputs/00_modelo_02/config.rds"))
+```
+
+
+```{r include=FALSE}
+# cargo todas las librerias en la carpeta lib
+
+librerias.proyecto.actual = list.files(path = paste0(path_base, 'lib'))
+librerias.proyecto.actual = librerias.proyecto.actual[!(librerias.proyecto.actual %in% c("README.md","globals.R","helpers.R"))]
+librerias.proyecto.actual = str_c(paste0(path_base, 'lib/'), librerias.proyecto.actual, sep = '' )
+librerias.proyecto.actual = librerias.proyecto.actual[str_ends(librerias.proyecto.actual, pattern = ".R") | str_ends(librerias.proyecto.actual, pattern = ".r")]
+# cargo las librerias
+sapply(librerias.proyecto.actual, source)
+
+```
+
+
+### carga de datos
+
+
+```{r}
+datos_train_prep = read_rds(path = paste0(path_base, config$outputs, "baseline_2009_train_prep.rds") )
+datos_test_prep = read_rds(path = paste0(path_base, config$outputs, "baseline_2009_test_prep.rds") )
+
+```
+
+```{r}
+pred = read_rds(path = paste0(path_base, config$outputs, "pred.rds") )
+```
+
+
+# COMPARAR MODELOS
+
+Una vez que se han entrenado y optimizado distintos modelos, se tiene que identificar cuál de ellos consigue mejores resultados. 
+La manera en la que se van a comparar los modelos es a através de métricas de Validación y el error en el Test.
+
+Este análisis se realiza con todos los modelos y sus variantes usando distintos datasets (los distintos métodos y para los que usan todos los predictores o una selección de los mismos \ref{otros datasets, datos reducidos por seleccion})
+
+## Métricas de valicación
+Las métricas obtenidas mediante validación (cv, etc) son estimaciones de la capacidad que tiene un modelo al predecir nuevas observaciones. 
+
+```{r}
+metricas_predicciones <- 
+  pred %>%
+  filter(object != "NNET") %>%
+  filter(object != "RandomForest_3") %>% 
+  filter(object != "Reg_Logistica_3") %>% 
+   mutate(acierto = ifelse(obs == pred, TRUE, FALSE)) %>%
+   group_by(object, dataType) %>%
+   summarise(accuracy = mean(acierto))
+
+ds_completo = c("SVMradial", "rf", "boosting", "logistic", "arbol", "LDA", "KNN")
+ds_seleccionvars = c("RandomForest", "Reg_logistica")
+ds_sinciclo = c("RandomForest_5", "SVM_5", "Reg_logistica_5", "C50_5", "GradienBoosting_5")
+
+metricas_predicciones %>%
+  spread(key = dataType, value = accuracy) %>%
+  mutate(
+    dataset = if_else(object %in% ds_completo, "DataSet-Completo",
+                      if_else(object %in% ds_seleccionvars, "DataSet-Alternativa1",
+                              if_else(object %in% ds_sinciclo, "DataSet-Alternativa2", "error")))
+  ) %>% 
+  arrange(desc(Test)) %>% 
+  kable(booktabs =T,
+             caption = "Resumen comparativo de algunos los modelos empleados",
+             label = "cuadro_comparativo-modelos",
+        align = "c") %>%
+  kable_styling(latex_options = c("striped", "hold_position")) %>%
+  row_spec(0, bold = T, color = "white", background = "black", align = "c")
+
+
+```
+
+
+
+
+```{r}
+metricas_predicciones_ordenadas =
+  metricas_predicciones %>% 
+  filter(dataType == "Test") %>% 
+  arrange((accuracy)) %>% 
+  rownames_to_column(var = "orden" ) %>% 
+  dplyr::select(object, orden) %>% 
+  unique() %>% 
+  inner_join(metricas_predicciones, by = "object")
+
+# gg_aux =
+ggplot(data = metricas_predicciones_ordenadas,
+       aes(x = reorder(object, as.numeric(orden)), y = accuracy,
+           color = dataType, label = round(accuracy, 2))) +
+  geom_point(size = 7, shape = 22, alpha = 0.5, aes(fill = dataType)) +
+  # geom_point(size = 5, shape = 22) +
+  # geom_bar(stat = "identity", position = "dodge2", aes(fill = NA) ) +
+  scale_color_manual(values = c("darkblue", "darkgreen")) +
+  scale_fill_manual(values = c("darkblue", "darkgreen")) +
+  # geom_text(color = "black", size = 3 ) +
+  geom_text(size = 3, position = position_nudge(y = if_else(metricas_predicciones$dataType == "Test", -0.02, 0.02)), mapping = aes(label= round(accuracy,2))) +
+  # geom_label(size = 3, position = position_nudge(y = if_else(metricas_predicciones$dataType == "Test", -0.05, 0.05)), mapping = aes(label= round(accuracy,2))) +
+  # scale_y_continuous(limits = c(0, 1)) +
+  # Accuracy basal
+  geom_hline(yintercept = 0.56, linetype = "dashed") +
+  annotate(geom = "text", y = 0.57, x = 7, label = "Accuracy clase mayoritaria 0.56", angle = 90) +
+  coord_flip() +
+  labs(title = "Accuracy de entrenamiento y test", 
+       x = "modelo") +
+  theme_bw() + 
+  theme(legend.position = "bottom")
+# agrego los labels (los valores son relativos a el punto en cuestion)
+# gg_aux +
+#     geom_label(size = 3,  nudge_y = if_else(gg_aux$data$dataType == "Test", -0.05, 0.05 ), aes(label= round(accuracy,2)))
+
+
+
+```
+
+Los vaores expresados en el gráfico son aquellos que una vez optimizado los parámetros con Crossvalidation, se entrena el modelo sin particiones utilizando todas las observaciones como train.
+
+
+## conclusión de comparacion modelos
+En los modelos que se realizan con datos completos, podemos determinar que el mejor modelo entrenado es el que emplea el método SVM. También resulta ser el mejor cuando se elimina la variable que mas influencia tiene en el resultado.
+De los métodos explicativos se puede decir que la regresión logistica seguido del arbol simple dan buenos resultados y no muy alejado de las métricas de SVM.
+
+Po rotro lado, los distintos modelos de Random Forest dan muy buenos resultados pero hay una diferencia muy grande en comparación a los otros métodos entre train y test, por lo que hay que ser precavido por el riesgo de sobreajuste. 
+
+Por lo tanto, si lo importante es elegir unmodelo que tenga mejor capacidad predictiva, con estas combinaciones de datos, la mejor opción es un SVM. No obstante, si se prioriza la interpretabilidad del modelo para extraer conclusiones, se podría seleccionar el modelo Regresión Logística o arbol simple.
+
+
+
