@@ -1,0 +1,64 @@
+[1] "2020-05-30 16:53:19"
+[1] "2020-05-30 17:24:41"
+Support Vector Machines with Radial Basis Function Kernel 
+
+3191 samples
+  23 predictor
+   2 classes: '0', '1' 
+
+No pre-processing
+Resampling: Cross-Validated (10 fold, repeated 5 times) 
+Summary of sample sizes: 2872, 2872, 2872, 2872, 2872, 2872, ... 
+Resampling results across tuning parameters:
+
+  sigma  C    Accuracy   Kappa    
+  0.001    1  0.7480486  0.4994051
+  0.001   20  0.7714904  0.5401926
+  0.001   50  0.7780057  0.5516062
+  0.001  100  0.7801979  0.5553161
+  0.001  200  0.7810745  0.5570066
+  0.001  500  0.7805746  0.5559505
+  0.001  700  0.7805737  0.5558286
+  0.010    1  0.7746228  0.5455156
+  0.010   20  0.7778166  0.5492181
+  0.010   50  0.7768764  0.5471644
+  0.010  100  0.7707337  0.5346637
+  0.010  200  0.7625225  0.5180258
+  0.010  500  0.7531818  0.4993358
+  0.010  700  0.7509257  0.4946373
+  0.100    1  0.7645923  0.5216666
+  0.100   20  0.7279226  0.4463349
+  0.100   50  0.7158284  0.4219963
+  0.100  100  0.7101242  0.4102727
+  0.100  200  0.7051113  0.3997520
+  0.100  500  0.6998466  0.3892320
+  0.100  700  0.6987192  0.3870674
+  0.500    1  0.7024140  0.3699657
+  0.500   20  0.6953284  0.3591385
+  0.500   50  0.6950147  0.3585687
+  0.500  100  0.6948893  0.3583377
+  0.500  200  0.6948889  0.3582428
+  0.500  500  0.6948889  0.3582428
+  0.500  700  0.6948889  0.3582428
+  1.000    1  0.6503917  0.2371779
+  1.000   20  0.6562198  0.2559950
+  1.000   50  0.6567845  0.2571392
+  1.000  100  0.6567845  0.2571392
+  1.000  200  0.6567845  0.2571392
+  1.000  500  0.6567845  0.2571392
+  1.000  700  0.6567845  0.2571392
+
+Accuracy was used to select the optimal model using the largest value.
+The final values used for the model were sigma = 0.001 and C = 200.
+Support Vector Machine object of class "ksvm" 
+
+SV type: C-svc  (classification) 
+ parameter : cost C = 200 
+
+Gaussian Radial Basis kernel function. 
+ Hyperparameter : sigma =  0.001 
+
+Number of Support Vectors : 1700 
+
+Objective Function Value : -320040.6 
+Training error : 0.201191 

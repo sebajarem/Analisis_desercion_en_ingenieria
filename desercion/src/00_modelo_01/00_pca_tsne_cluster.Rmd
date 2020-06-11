@@ -1,0 +1,815 @@
+---
+title: "Modelos no Supervisados"
+# params: 
+#   output_dir: "../../reports/00_modelo_01/"
+#params:
+#  encoding: "latin1"
+output:
+  pdf_document:
+    keep_tex: yes
+    #df_print: paged
+    latex_engine: pdflatex
+    pandoc_args: "--listings"
+  html_notebook:
+    code_folding: hide
+    number_sections: yes
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+    df_print: paged
+  html_document:
+    keep_md: TRUE
+    toc: true
+    theme: united
+    toc_float: yes
+    df_print: paged
+author: "Sebastian Jaremczuk"
+date: 2020-04-17
+# always_allow_html: true # esto es para que siempre permita html por los widgets pero no anda bien el kable ... usar webshot y phantomjs (tampo anduvo bien)
+---
+
+```{r include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, include = TRUE, message = FALSE, warning = FALSE)
+
+```
+
+
+```{r}
+# para que los widget los tome como printscreen cdo hace df
+# install.packages("webshot")
+# webshot::install_phantomjs()
+```
+
+
+
+```{r include=FALSE}
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+library(stringr)
+library(glue)
+
+```
+
+```{r include=FALSE}
+
+getwd()
+path_base = '/home/rstudio/desercion/'
+# saveRDS(config, paste0(path_base, "outputs/00_modelo_01/config.rds"))
+config = read_rds(paste0(path_base, "outputs/00_modelo_01/config.rds"))
+```
+
+
+
+```{r include=FALSE}
+# cargo todas las librerias en la carpeta lib
+
+librerias.proyecto.actual = list.files(path = paste0(path_base, 'lib'))
+librerias.proyecto.actual = librerias.proyecto.actual[!(librerias.proyecto.actual %in% c("README.md","globals.R","helpers.R"))]
+librerias.proyecto.actual = str_c(paste0(path_base, 'lib/'), librerias.proyecto.actual, sep = '' )
+librerias.proyecto.actual = librerias.proyecto.actual[str_ends(librerias.proyecto.actual, pattern = ".R") | str_ends(librerias.proyecto.actual, pattern = ".r")]
+# cargo las librerias
+sapply(librerias.proyecto.actual, source)
+
+```
+
+
+### carga de datos
+
+```{r include=FALSE}
+tablon = read_rds(paste0(path_base, "data/", config$versionData, "_", config$versionDataNro, "/", "baseline.rds"))
+# tablon = read_rds(paste0(path_base, "data/00_modelo_01/baseline.rds"))
+```
+
+
+### Reducción de Dimensión
+
+#### Análisis de Componentes Principales
+
+Se aplica a técnica de Componentes Principales para reducir las variables predictoras pero que tengan un gran porcentaje de la variabilidad total.
+
+```{r}
+
+#############################
+# PCA - analisis de componentes principales
+###############################
+
+tablon_pca =
+  tablon %>%
+  select_if(is.numeric)
+
+row.names(tablon_pca) = as.character(tablon$codigo.alumno)
+
+pca <- prcomp(tablon_pca,
+              scale = TRUE)
+# names(pca)
+
+# Los elementos center y scale almacenados en el objeto pca contienen la media y desviación típica de las variables previa estandarización (en la escala original).
+
+# rotation contiene el valor de los loadings ϕ para cada componente (eigenvector). El número máximo de componentes principales se corresponde con el mínimo(n-1,p), que en este caso es min(49,4)=4.
+# pca$rotation[1:5,1:5]
+
+# pca$x
+# X tiene: el valor de las componentes principales para cada observación (principal component scores) multiplicando los datos por los vectores de loadings.
+# dim(pca$x)
+# 
+# summary(pca)
+# 
+# pca$rotation[,1:5] %>%
+#   as.data.frame() %>%
+#   summarise(
+#     min = min(abs(PC1)),
+#     max = max(abs(PC1))
+#   )
+
+prop_varianza <- pca$sdev^2/sum(pca$sdev^2)
+prop_varianza_acum <- cumsum(prop_varianza)
+
+gg1 =
+  ggplot(data = data.frame(prop_varianza_acum, pc = factor(1:23)),
+       aes(x = pc, y = prop_varianza_acum, group = 1)) +
+  geom_point() +
+  geom_line() +
+  geom_label(aes(label = round(prop_varianza_acum,2))) +
+  theme_bw() +
+  labs(x = "Componentes principales", 
+       y = "Prop. varianza explicada acumulada")
+
+
+
+
+
+gg1
+
+```
+
+```{r}
+loadings  =
+  bind_cols(data_frame(variable = row.names(pca$rotation)),
+          as_data_frame(pca$rotation[,1:4]))
+
+
+knitr::kable(as_tibble(loadings), booktabs =T,
+             # format = "latex",
+             caption = "Loadings de PCA en Tablon",
+             label = "loadings_pca_tablon") %>% 
+   kableExtra::kable_styling(latex_options = c("striped", "hold_position")) %>%
+   kableExtra::row_spec(0, bold = T, color = "white", background = "black", align = "c")
+
+```
+
+
+```{r}
+# library(devtools)
+# install_github("vqv/ggbiplot")
+# devtools::install_github("richardjtelford/ggbiplot", ref = "experimental")
+
+library("ggbiplot")
+
+ggbiplot(pca, obs.scale = 1, var.scale = 1, labels = NULL, alpha = 0.2,
+  groups = tablon$deserto, ellipse = TRUE, circle = TRUE) +
+  scale_color_discrete(name = 'deserto') +
+  # geom_point(aes(colour=tablon$deserto), size = 0.1) +
+  theme(legend.direction = 'horizontal', legend.position = 'top')
+
+
+# biplot(x = pca, scale = 0, cex = 0.6, xlabs = rep("", nrow(pca$x)))
+
+
+
+```
+
+
+Se puede observar que si bien se puede reducir la cantidad de variables predictoras y mantener una alta variabilidad de la información explicada, los diagramas de biplot en este caso no nos servirían de mucha ayuda ya que en las primeras 2 componentes solo se explica el 41% y en las primeras 4 componentes solo el 56%. Además, los loadings de dichos componentes no tienen una clara identificación de la proyección que quieren significar, por lo que sería complicado explicar el modelo que se queira desarrollar según estas nuevas variables.
+
+
+```{r include=FALSE}
+# library(plotly)
+#
+# gg1_interactivo =
+#   ggplotly(gg1) %>%
+#   add_annotations( text="PCA", xref="paper", yref="paper",
+#                    x=1.01, xanchor="left",
+#                    y=0.8, yanchor="bottom",    # Same y as legend below
+#                    legendtitle=TRUE, showarrow=FALSE ) %>%
+#   layout( legend=list(y=0.8, yanchor="top" ) ) %>%
+#   config(
+#     scrollZoom = F,
+#     displayModeBar = F,
+#     displaylogo = F,
+#     # editable = T,
+#     showLink = F,
+#     toImageButtonOptions = T)
+#
+# # gg1_interactivo
+
+```
+
+
+#### Reducción por t-SNE
+
+Al igual que PCA, existen otro algoritmos que pueden realizar ruducción de dimensionalidad. Unos de esos casos es el método no lineal t-distributed stochastic neighbor embedding (t-SNE), que en ciertos casos es ventajoso respecto a PCA que aplica reducción pero utilizando combinaciones lineales de las variables originales.
+
+
+```{r}
+
+#######################################
+# T-SNE
+##################################
+
+# Recordar que la visualizacones no puede sacarse conclusiones, sino decir si se puede agrupar o no de alguna manera
+# esto puede servir para poner parametros o un umbral en cuanto a la frecuencia de casos para definir si una comunidad
+# esta infectada o no
+
+
+library(tsne)
+library(ggplot2)
+
+set.seed(321)
+# lo comento proque tarda un monton, levanto el que ya esta procesado
+# tsne_reduction <- tsne(tablon_pca, k = 2, perplexity = 45, epoch = 300)
+# saveRDS(tsne_reduction, file = paste0(path_base, "outputs/", config$versionData, "_", config$versionDataNro, "/", "tsne_2_30_300.rds"))
+# se le agrega el target y se pinta de color de acuerdo a ese numero
+
+tsne_reduction = readr::read_rds(path = paste0(path_base, "outputs/", config$versionData, "_", config$versionDataNro, "/", "tsne_2_30_300.rds"))
+
+resultados <- as.data.frame(tsne_reduction)
+colnames(resultados) <- c("dim_1", "dim_2")
+resultados$deserto <- (tablon$deserto)
+resultados =
+  resultados %>%
+  mutate(
+    deserto = as.character(deserto),
+    nombre_comunidad = row.names(tablon_pca)
+  )
+gg2 =
+  ggplot(data = resultados, aes(x = dim_1, y = dim_2)) +
+  geom_point(aes(color = deserto , text=sprintf(" dim_1: %s <br> dim_2: %s <br> deserto: %s <br> ", dim_1, dim_2, deserto), alpha = 0.3)) +
+  theme_bw()
+
+gg2
+
+# ggsave(plot = gg2,
+#        paste0(path_base, "graphs/", config$versionData, "_", config$versionDataNro, "/", "tsn2_2_45_300.png") )
+
+```
+
+Utilizando el método T-SNE, si bien no se arman grupos bien definidos, al identificar cada observación con un color en el gráfico  según el target puede observarse que están mas separadas y hay menos solapamiento entre ellas que con el método PCA. Este resultado puede insinuar que es posible clasificar un gran porcentaje de los casos correctamente.
+
+
+#### Clusters
+
+Se utilizarán técnicas de clusters sobre la base del tablón y las reducciones de dimensión calculadas anteriormente.
+
+Criterio:
+* Como son solamente 2 las variables categóricas (EsTecnico y sexo), en vez de calcular las distancias numéricas por un lado (euclídea, manhattan, correlación, etc), las distancias categóricas por otras (SMC, Jaccard, etc) y tratar de transformar esas matrices de distancias en una nueva matriz unificada con criterios, se decide transformar los datos categóricos en numéricos aprovechndo que ambos campos tiene solamente 2 valores por lo que estarán en los extremos tomando una normalización entre 0 y 1. En el caso de las observaciones que con valor nulo en la variable EsTecnico, se imputará con el valor 0.5 (mitad entre extremos)
+
+
+```{r}
+# transformacion de datos
+
+tablon_cluster =
+  tablon %>%
+  mutate(
+    Tecnico = as.numeric(replace_na(EsTecnico, replace = 0.5)),
+    Sexo = as.double(
+      if_else(Sexo == "M", 1,
+              if_else(Sexo == "F", 0, -1)
+              )
+    )
+  )
+
+tablon_cluster =
+  tablon_cluster %>%
+  select_if(is.numeric)
+
+row.names(tablon_cluster) = tablon$codigo.alumno
+
+
+
+
+```
+
+
+
+```{r}
+
+#####################################################################
+#####################################################################
+# cluster
+######################################################################
+#######################################################################
+
+library(cluster)
+library(factoextra)
+
+
+# analizo y preproceso el dataset ya preprocesado pero para adaprtarlo para hacer clusters
+# names(tablon_cluster)
+# glimpse(tablon_cluster)
+
+# row.names(tablon_cluster)
+
+# escalo el dataset y le saco el target y la variable que tiene el id
+tablon_cluster_scaled = scale(tablon_cluster)
+
+
+####
+# analizo tendencia al cluster
+####
+
+
+# estadistico de hopkins
+# Hopkins statistic: If the value of Hopkins statistic is close to 1 (far above 0.5), then we can conclude that the dataset is significantly clusterable
+
+clust_tend = get_clust_tendency(data = tablon_cluster_scaled, n = 50, seed = 123, graph = FALSE)
+
+clust_tend$hopkins_stat
+```
+
+El estadístico de Hopkins sobre el tablon orifginal transformado las 2 variable cateóricas en numéricas da `r clust_tend$hopkins_stat`. Es un valor cercano a 1 por lo que tiene mucha tendencia a ser clusterizado.
+
+#### Matriz distancia entre variables
+Matriz
+```{r}
+
+#  calculamos distancias y las graficamos
+
+mat_dist <- dist(x = tablon_cluster_scaled, method = "euclidean")
+
+# p1 <- fviz_dist(dist.obj = mat_dist, show_labels = FALSE) +
+#   labs(title = "Distancia Euclideana entre variables") + theme(legend.position = "bottom")
+#
+#
+#
+# # library(ggpubr)
+# # ggarrange(p1) %>%
+# #   ggexport(filename = paste0(path_base, "graphs/", config$versionData, "_", config$versionDataNro, "/", "Distancia_euclidea_variables.png"))
+#
+# ggsave(plot = p1, paste0(path_base, "graphs/", config$versionData, "_", config$versionDataNro, "/", "p1.png") )
+#
+# load(paste0(path_base, "graphs/", config$versionData, "_", config$versionDataNro, "/", "p1.png"))
+
+
+
+```
+
+#### Estudio del número óptimo de clusters
+
+Por la cantidad de datos que hay en el dataset y el poder computacional
+
+```{r}
+
+###
+# numero optimo de clusters
+###
+
+kmeans_sil = fviz_nbclust(x = tablon_cluster_scaled, FUNcluster = kmeans, method = "silhouette",
+                                diss = dist(tablon_cluster_scaled, method = "euclidean"), k.max = 8)
+
+kmeans_wss = fviz_nbclust(x = tablon_cluster_scaled, FUNcluster = kmeans, method = "wss",
+                                diss = dist(tablon_cluster_scaled, method = "euclidean"), k.max = 8)
+
+plot(kmeans_sil)
+
+# ggsave(plot = kmeans_sil, paste0(path_base, "graphs/", config$versionData, "_", config$versionDataNro, "/", "kmeans_sil_variables.png") )
+
+plot(kmeans_wss)
+
+# ggsave(plot = kmeans_wss, paste0(path_base, "graphs/", config$versionData, "_", config$versionDataNro, "/", "kmeans_wss_variables.png") )
+
+```
+
+Verificación de las funciones anteriores de número óptio de clsuters pero calculadas manualmente
+
+```{r include=FALSE}
+
+########################################################################################
+######################################################################################
+# calculo el numero optimo de cluster pero de forma analistica sin graficos
+####
+
+calcular_totwithinss <- function(n_clusters, datos, iter.max=1000, nstart=50){
+  # Esta función aplica el algoritmo kmeans y devuelve la suma total de
+  # cuadrados internos.
+  cluster_kmeans <- kmeans(centers = n_clusters, x = datos, iter.max = iter.max,
+                           nstart = nstart)
+  return(cluster_kmeans$tot.withinss)
+}
+
+# Se aplica esta función con para diferentes valores de k
+total_withinss <- map_dbl(.x = 1:15,
+                          .f = calcular_totwithinss,
+                          datos = tablon_cluster_scaled)
+total_withinss
+
+data.frame(n_clusters = 1:15, suma_cuadrados_internos = total_withinss) %>%
+  ggplot(aes(x = n_clusters, y = suma_cuadrados_internos)) +
+  geom_line() +
+  geom_point() +
+  scale_x_continuous(breaks = 1:15) +
+  labs(title = "Evolución de la suma total de cuadrados intra-cluster") +
+  theme_bw()
+
+
+silhouette_kmeans <- function(n_clusters, datos, iter.max=1000, nstart=50){
+  # Esta función aplica el algoritmo kmeans y devuelve la media del índice silueta
+  if (n_clusters == 1) {
+    # Para n_clusters = 1, el indice silueta es 0
+    media_silhouette <- 0
+  }else {
+    cluster_kmeans <- kmeans(centers = n_clusters, x = datos, iter.max = iter.max,
+                             nstart = nstart)
+    valores_silhouette <- cluster::silhouette(cluster_kmeans$cluster,
+                                              get_dist(x = datos, method = "euclidean"))
+    media_silhouette <- summary(valores_silhouette)[[4]]
+    return(media_silhouette)
+  }
+
+}
+
+valores_medios_silhouette <- map_dbl(.x = 1:15,
+                                     .f = silhouette_kmeans,
+                                     datos = tablon_cluster_scaled)
+
+data.frame(n_clusters = 1:15, media_silhouette = valores_medios_silhouette) %>%
+  ggplot(aes(x = n_clusters, y = media_silhouette)) +
+  geom_line() +
+  geom_point() +
+  scale_x_continuous(breaks = 2:15) +
+  theme_bw()
+
+####
+# fin de calculos analiticos sin fviz_nbclust
+########################################################################################
+######################################################################################
+
+
+
+```
+
+
+
+```{r}
+
+####
+# validacion 2
+####re
+
+library("clValid")
+
+intern <- clValid(tablon_cluster_scaled, nClust = 2:5,
+                  clMethods = c("kmeans", "hierarchical"),
+                  metric = "euclidean",
+                  validation = "internal",
+                  maxitems = nrow(tablon_cluster_scaled))
+
+summary(intern)
+
+```
+
+* Método Kmeans:
+Los resultados anteriores de validaciones internas, nuevamente nos da que la òptima solución son 2 clusters en las métricas de Siloutte y Connectivity mientras que para la métrica de Dunn el óptimo número de clusters sería 3.
+
+* Método Jerárquico:
+E esta validación se agregó el método jerárquico en el cual las métricas Connectivity y Dunn dan resultados iguales mientras que en silhouette es mejor el resultado con 2 clusters.
+
+La conslución que podes sacar es que pareciera ser que la mejor solución es hacer clusters de 2 grupos ya sea por el método Kmeans o Jerárquico.
+
+#### Cluster Kmeans
+
+Tomando como referencia las validaciones anteriores, se realizará un cluster kmeans con 2 centroides. Este método se repetirá 25 veces distintas se elegirá el mejor.
+
+
+```{r}
+
+set.seed(123)
+km_clusters <- kmeans(x = tablon_cluster_scaled, centers = 2, nstart = 25)
+# names(km_clusters)
+
+gg_clust_kmeans_2 = fviz_cluster(km_clusters, tablon_cluster, geom = "point", labelsize = 0, main = "cluster" ) + theme_minimal()
+
+sil = silhouette(km_clusters$cluster, get_dist(x = tablon_cluster_scaled, method = "euclidean"))
+gg_clust_kmeans_2_silhoutte = factoextra::fviz_silhouette(sil)
+
+# ggsave(plot = gg_clust_kmeans_2, paste0(path_base, "graphs/", config$versionData, "_", config$versionDataNro, "/", "gg_clust_kmeans_2.png") )
+# ggsave(plot = gg_clust_kmeans_2_silhoutte, paste0(path_base, "graphs/", config$versionData, "_", config$versionDataNro, "/", "gg_clust_kmeans_2_silhoutte.png") )
+
+gg_clust_kmeans_2
+gg_clust_kmeans_2_silhoutte
+
+
+
+```
+
+El cluster parece ser muy bueno. Por lo tanto el próximo paso es saber en que cluster cae cada observación según su target
+
+
+```{r}
+
+# split(row.names(tablon_cluster_scaled), km_clusters$cluster)
+
+df_grupo =
+  data.frame(
+    grupo = km_clusters$cluster,
+    codigo.alumno = row.names(as.data.frame(km_clusters$cluster))) %>%
+  mutate_if(is.factor, as.character)
+
+df_grupo_aux =
+  df_grupo %>%
+  inner_join(tablon, by = "codigo.alumno") %>%
+  group_by(grupo) %>%
+  dplyr::summarise(
+    cant_integrantes = dplyr::n(),
+    cant_desertores = sum(if_else(deserto == "1", 1, 0)),
+    cant_desertores_pct = cant_desertores/cant_integrantes*100,
+    cant_no_desertores = sum(if_else(deserto == "0", 1, 0)),
+    cant_no_desertores_pct = cant_no_desertores/cant_integrantes*100
+  )
+
+
+
+
+```
+
+```{r}
+df_grupo_aux %>% 
+  kable(booktabs =T,
+             caption = "Resumen composición de cluster Kmeans según clase desertor",
+             label = "kmeans_2_resumen") %>%
+  kable_styling(latex_options = c("striped", "hold_position")) %>%
+  row_spec(0, bold = T, color = "white", background = "black", align = "c")
+```
+
+
+```{r}
+# quiero agregar los datos identificados por target. la funcion fviz_cluster no me deja ahacerlo, pero puedo caldularlo como lo hace la funcon y agregarlo como una capa mas porq es un ggplot
+
+pca_clust = prcomp(tablon_cluster_scaled)
+
+data_pca_clust = as_data_frame(pca_clust$x)
+data_pca_clust$deserto = tablon$deserto
+data_pca_clust =
+  data_pca_clust %>%
+  select(PC1, PC2, deserto)
+colnames(data_pca_clust) = c("x", "y", "deserto")
+
+gg_clust_kmeans_2_target =
+fviz_cluster(km_clusters, tablon_cluster, geom = "point", labelsize = 0, main = "cluster con indicador de clase en obsrvación" ) +
+  theme_minimal() +
+  # agrego data nueva
+  geom_point(data = data_pca_clust %>% filter(deserto == "1") %>% select(-deserto), color = "firebrick", alph = 0.5) +
+  geom_point(data = data_pca_clust %>% filter(deserto == "0") %>% select(-deserto), color = "blue", alpha = 0.5)
+
+gg_clust_kmeans_2_target
+
+# ggsave(plot = gg_clust_kmeans_2_target, paste0(path_base, "graphs/", config$versionData, "_", config$versionDataNro, "/", "gg_clust_kmeans_2_target.png") )
+
+
+
+```
+
+
+
+Puede observarse que un grupo contiene solamente un 11,13% de datos erroneos, pero el otro grupo està muy balanceado.
+Por lo tanto, el cluster de 2 grupos a pesar de que tenga muy buenos valores en las validaciones realizadas, al verificar con el target real donde queda cada obsevación no es un buen resultado.
+En el gráfico se observa lo expresado en la tabla.
+
+#### cluster jerárquico
+
+Siguiendo lo sugerido se realiza el cluster jerárquico. Es de destacar que esta vez no puede mostrarse el dendograma completo ya que la cantidad de observaciones son muchas. Por lo cual, según lo sugerido en las validaciones, se hará el cote en 2 grupos y se verificará según la clase si la composición de los grupos se relaciona bien con e target.
+
+Se realizan 4 cluster jerarquicos, cada uno utilizando las medidas de distancias "complete", "average", "single", "ward".
+
+
+```{r}
+
+####
+# jerarquico
+####
+
+mat_dist <- dist(x = tablon_cluster_scaled, method = "euclidean")
+
+hc_complete <- hclust(d = mat_dist, method = "complete")
+hc_average <- hclust(d = mat_dist, method = "average")
+hc_single <- hclust(d = mat_dist, method = "single")
+hc_ward <- hclust(d = mat_dist, method = "ward.D2")
+# cor(x = mat_dist, cophenetic(hc_complete))
+# cor(x = mat_dist, cophenetic(hc_average))
+# cor(x = mat_dist, cophenetic(hc_single))
+# cor(x = mat_dist, cophenetic(hc_ward))
+
+table_clust_jerar_cophe =
+  data_frame(metodo = c("complete", "average", "single", "ward"),
+             coeficiente_cofenetico = c(
+               cor(x = mat_dist, cophenetic(hc_complete)),
+               cor(x = mat_dist, cophenetic(hc_average)),
+               cor(x = mat_dist, cophenetic(hc_single)),
+               cor(x = mat_dist, cophenetic(hc_ward))
+             ))
+
+table_clust_jerar_cophe %>%
+  kable(booktabs =T,
+             caption = "Coef. cophenetic por cada tipo de cluster jerárquico",
+             label = "tabla_cophenetic_jerarquico") %>%
+  kable_styling(latex_options = c("striped", "hold_position")) %>%
+  row_spec(0, bold = T, color = "white", background = "black", align = "c")
+
+# elijo el de mayor coef cophenetic
+# plot(hc_average )
+# rect.hclust(hc_ward, k=2, border="red")
+
+
+```
+
+El tipo de distancia del cluster jerárquico que arroja el mayor coeficiente cophenetico es "average" con un valor de 0.8142721.
+
+
+
+```{r}
+
+
+## analisis de los grupos
+
+grupos<-cutree(hc_average,k=2)
+# split(rownames(tablon_cluster_scaled),grupos)
+
+df_grupo =
+  data.frame(
+  grupo = as.data.frame(grupos)$grupos,
+  codigo.alumno = row.names(as.data.frame(grupos)))
+
+df_grupo %>%
+  inner_join(tablon, by = "codigo.alumno") %>%
+  group_by(grupo) %>%
+  dplyr::summarise(
+    cant_integrantes = dplyr::n(),
+    cant_desertores = sum(if_else(deserto == "1", 1, 0)),
+    cant_desertores_pct = cant_desertores/cant_integrantes*100,
+    cant_no_desertores = sum(if_else(deserto == "0", 1, 0)),
+    cant_no_desertores_pct = cant_no_desertores/cant_integrantes*100
+  ) %>%
+  kable(booktabs =T,
+             caption = "Composición de clusters según la clase deserto",
+             label = "tabla_jerarquico_composicion") %>%
+  kable_styling(latex_options = c("striped", "hold_position", "scale_down")) %>%
+  row_spec(0, bold = T, color = "white", background = "black", align = "c")
+
+
+
+```
+
+se puede observar que forma un grupo muy numeroso y otro muy chico y ambos estan muy mezclados en función el target. Por lo tanto, el método jerárquico no es adecuado.
+
+
+#### Extensión de Clusters
+
+A pesar del estudio de validaciones y resultados anteriormente, igualmente queremos ver cuales son los resultados que nos arrojan hacer mas de 2 clusters.
+Como los resultados los referenciamos al target, campo que no se incluye en los datos para ahcer cluster al ser no supervisado, podría darse el caso de que en la situación real otro número de cluster sea óptima a la que arrojan las validaciones matemáticas.
+
+
+```{r}
+
+##########################
+# CUADRO RESUMEN
+##########################
+
+df_resumen_cluster =
+  dplyr::data_frame(
+    metodo = character(),
+    numero_clusters = double(),
+    info = list()
+  )
+
+
+for(num_clusters in 2:5){
+
+  # kmeans
+  km_clusters <- kmeans(x = tablon_cluster_scaled, centers = num_clusters, nstart = 25)
+
+  desertores_kmeans = contar_desertores(cluster_membership = km_clusters$cluster,
+                                                         datos_cluster = tablon_cluster_scaled,
+                                                         datos_referencia = tablon)
+  # jerarquico
+  hc_average <- hclust(d = mat_dist, method = "average")
+  # cor(x = mat_dist, cophenetic(hc_average))
+  grupos<-cutree(hc_average, k= num_clusters)
+  desertores_jerarquico = contar_desertores(cluster_membership = grupos,
+                                                         datos_cluster = tablon_cluster_scaled,
+                                                         datos_referencia = tablon)
+
+
+  ## continuar desde aca, juntar tibble
+  df_kmeans =
+    dplyr::data_frame(
+    metodo = "kmeans",
+    numero_clusters = num_clusters,
+    info = list(desertores_kmeans)
+  )
+
+  df_jerarquico =
+    dplyr::data_frame(
+      metodo = "jerarquico",
+      numero_clusters = num_clusters,
+      info = list(desertores_jerarquico)
+    )
+
+  df_resumen_cluster =
+    bind_rows(df_resumen_cluster, df_kmeans, df_jerarquico)
+
+
+}
+
+
+###
+# analisis df
+###
+
+df_resumen_cluster_info =
+  df_resumen_cluster %>%
+  unnest(info) %>%
+  unite(col = cluster_deserto, num:deserto, sep = "_", remove = T) %>%
+  spread(
+    key = cluster_deserto,
+    value = cantidad
+  )
+
+df_resumen_cluster_info %>%
+  kable(booktabs =T,
+             caption = "Resumen por tipo de cluster, cantidad de clusters y la composición de cada uno según la clase deserto",
+             label = "tabla_muchos_clusters") %>%
+  kable_styling(latex_options = c("striped", "hold_position", "scale_down")) %>%
+  row_spec(0, bold = T, color = "white", background = "black", align = "c")
+
+
+
+
+```
+
+
+A continuación mostramos un grafico resumen sobre
+
+
+```{r}
+
+df_resumen_cluster_ggplot =
+  df_resumen_cluster %>%
+  unnest(info) %>%
+  # unite(col = cluster_infectado, num:infectado, sep = "_", remove = T) %>%
+  unite(col = metodo_clusters, metodo:numero_clusters, sep = "_", remove = T)
+
+df_resumen_cluster_ggplot_scatter =
+  df_resumen_cluster_ggplot %>%
+  unite(col = metodo_cluster_deserto, c(metodo_clusters,deserto), sep = "_", remove = F)
+
+
+gg_scatter =
+  ggplot(
+    data = df_resumen_cluster_ggplot_scatter,
+    mapping = aes(x = metodo_cluster_deserto, y = num, fill = deserto,
+                  size = 20,
+                   # size = 20 + (cantidad - min(cantidad)*(30 - 20))/(max(cantidad)-min(cantidad)),
+                  shape = deserto, color = deserto)
+  ) +
+  # geom_point(alpha = 0.6) +
+  geom_text(label = as.character(df_resumen_cluster_ggplot$cantidad)) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+gg_scatter
+
+
+
+```
+
+La figura muestra la misma información que el cuadro anterior. En el eje x indica que tipo de cluster es, cuantos clusters y la clase deserto ("S" y "N"). En el eje y se indica el numero de cluster, por lo que los cluster armados solo con 2 clusters, habrá información únicamente hasta esa altura. Por ejemplo, para el el caso de aplciar un método jerárquico de 2 clusters podemos observar que en el primer cluster tenemos 2554 casos Negatigos y 1996 casos positivos, mientras que el cluster número 2 esta conformado de 4 casos negativos y 4 casos positivos.
+
+
+
+```{r include=FALSE}
+
+# gg_scatter_interact =
+#   ggplotly(gg_scatter) %>%
+#   add_annotations( text="deserto", xref="paper", yref="paper",
+#                    x=1.01, xanchor="left",
+#                    y=0.8, yanchor="bottom",    # Same y as legend below
+#                    legendtitle=TRUE, showarrow=FALSE ) %>%
+#   layout( legend=list(y=0.8, yanchor="top" ) ) %>%
+#   config(
+#     scrollZoom = F,
+#     displayModeBar = F,
+#     displaylogo = F,
+#     # editable = T,
+#     showLink = F,
+#     toImageButtonOptions = T)
+#
+# # tengo que cambiar el working diretory porque el save de htmlwidget no lo pude hacer andar sin cambiarlo
+# # setwd(paste0(path_base, "graphs/", config$versionData, "_", config$versionDataNro, "/"))
+# # ggsave("clusters_desertores_comparacion.png", plot = gg_scatter)
+# # htmlwidgets::saveWidget(as_widget(gg_scatter_interact), "clusters_desertores_comparacion.html")
+# # setwd(paste0(path_base, "src/", config$versionData, "_", config$versionDataNro, "/"))
+
+
+
+```
+

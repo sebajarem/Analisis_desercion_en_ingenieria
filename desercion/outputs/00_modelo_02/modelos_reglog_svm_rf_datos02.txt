@@ -1,0 +1,228 @@
+[1] "2020-05-25 16:01:53"
+$shared_settings
+list()
+
+$models
+list()
+
+$model_fits
+list()
+
+attr(,"class")
+[1] "model_grid"
+$RandomForest
+$RandomForest$method
+[1] "ranger"
+
+$RandomForest$num.trees
+[1] 500
+
+$RandomForest$tuneGrid
+   mtry min.node.size splitrule
+1     3             2      gini
+2     4             2      gini
+3     5             2      gini
+4     7             2      gini
+5     3             3      gini
+6     4             3      gini
+7     5             3      gini
+8     7             3      gini
+9     3             4      gini
+10    4             4      gini
+11    5             4      gini
+12    7             4      gini
+13    3             5      gini
+14    4             5      gini
+15    5             5      gini
+16    7             5      gini
+17    3            10      gini
+18    4            10      gini
+19    5            10      gini
+20    7            10      gini
+21    3            15      gini
+22    4            15      gini
+23    5            15      gini
+24    7            15      gini
+25    3            20      gini
+26    4            20      gini
+27    5            20      gini
+28    7            20      gini
+29    3            30      gini
+30    4            30      gini
+31    5            30      gini
+32    7            30      gini
+
+
+$Reg_logistica
+$Reg_logistica$method
+[1] "glm"
+
+$Reg_logistica$family
+
+Family: binomial 
+Link function: logit 
+
+
+
+$SVM
+$SVM$method
+[1] "svmRadial"
+
+$SVM$tuneGrid
+   sigma   C
+1  0.001   1
+2  0.010   1
+3  0.100   1
+4  0.500   1
+5  1.000   1
+6  0.001  20
+7  0.010  20
+8  0.100  20
+9  0.500  20
+10 1.000  20
+11 0.001  50
+12 0.010  50
+13 0.100  50
+14 0.500  50
+15 1.000  50
+16 0.001 100
+17 0.010 100
+18 0.100 100
+19 0.500 100
+20 1.000 100
+21 0.001 200
+22 0.010 200
+23 0.100 200
+24 0.500 200
+25 1.000 200
+26 0.001 500
+27 0.010 500
+28 0.100 500
+29 0.500 500
+30 1.000 500
+31 0.001 700
+32 0.010 700
+33 0.100 700
+34 0.500 700
+35 1.000 700
+
+
+[1] "2020-05-25 16:31:52"
+$RandomForest
+Random Forest 
+
+3191 samples
+   9 predictor
+   2 classes: '0', '1' 
+
+No pre-processing
+Resampling: Cross-Validated (5 fold, repeated 8 times) 
+Summary of sample sizes: 2553, 2553, 2552, 2553, 2553, 2553, ... 
+Resampling results across tuning parameters:
+
+  mtry  min.node.size  Accuracy   Kappa    
+  3      2             0.7671206  0.5282249
+  3      3             0.7665719  0.5271329
+  3      4             0.7672766  0.5285668
+  3      5             0.7666903  0.5274872
+  3     10             0.7700196  0.5341778
+  3     15             0.7695101  0.5334912
+  3     20             0.7697845  0.5340891
+  3     30             0.7720178  0.5387246
+  4      2             0.7646133  0.5231270
+  4      3             0.7664932  0.5268484
+  4      4             0.7659055  0.5259800
+  4      5             0.7656712  0.5253449
+  4     10             0.7676689  0.5295171
+  4     15             0.7699800  0.5343340
+  4     20             0.7693140  0.5329868
+  4     30             0.7708810  0.5363738
+  5      2             0.7640269  0.5217434
+  5      3             0.7630079  0.5197385
+  5      4             0.7646127  0.5229645
+  5      5             0.7644957  0.5229746
+  5     10             0.7671606  0.5285420
+  5     15             0.7682956  0.5307551
+  5     20             0.7683344  0.5309660
+  5     30             0.7699800  0.5343229
+  7      2             0.7609303  0.5154202
+  7      3             0.7621059  0.5177764
+  7      4             0.7632023  0.5202340
+  7      5             0.7644169  0.5226701
+  7     10             0.7637510  0.5214020
+  7     15             0.7654751  0.5251842
+  7     20             0.7668063  0.5278189
+  7     30             0.7682571  0.5308204
+
+Tuning parameter 'splitrule' was held constant at a value of gini
+Accuracy was used to select the optimal model using the largest value.
+The final values used for the model were mtry = 3, splitrule = gini and min.node.size = 30.
+
+$Reg_logistica
+Generalized Linear Model 
+
+3191 samples
+   9 predictor
+   2 classes: '0', '1' 
+
+No pre-processing
+Resampling: Cross-Validated (5 fold, repeated 8 times) 
+Summary of sample sizes: 2553, 2553, 2552, 2553, 2553, 2553, ... 
+Resampling results:
+
+  Accuracy   Kappa    
+  0.7532915  0.5033037
+
+
+$SVM
+Support Vector Machines with Radial Basis Function Kernel 
+
+3191 samples
+   9 predictor
+   2 classes: '0', '1' 
+
+No pre-processing
+Resampling: Cross-Validated (5 fold, repeated 8 times) 
+Summary of sample sizes: 2553, 2553, 2552, 2553, 2553, 2553, ... 
+Resampling results across tuning parameters:
+
+  sigma  C    Accuracy   Kappa    
+  0.001    1  0.7438129  0.4917030
+  0.001   20  0.7599914  0.5191528
+  0.001   50  0.7643776  0.5266291
+  0.001  100  0.7679037  0.5322336
+  0.001  200  0.7700185  0.5355078
+  0.001  500  0.7708412  0.5364820
+  0.001  700  0.7711154  0.5368842
+  0.010    1  0.7669635  0.5307533
+  0.010   20  0.7742489  0.5428489
+  0.010   50  0.7749148  0.5439189
+  0.010  100  0.7764432  0.5470838
+  0.010  200  0.7759344  0.5460442
+  0.010  500  0.7755822  0.5453510
+  0.010  700  0.7742116  0.5425029
+  0.100    1  0.7681014  0.5310811
+  0.100   20  0.7627728  0.5192568
+  0.100   50  0.7564666  0.5063415
+  0.100  100  0.7507857  0.4948993
+  0.100  200  0.7451836  0.4836291
+  0.100  500  0.7308855  0.4549582
+  0.100  700  0.7266937  0.4463752
+  0.500    1  0.7554849  0.5039269
+  0.500   20  0.7139232  0.4191100
+  0.500   50  0.6993523  0.3889637
+  0.500  100  0.6903038  0.3701424
+  0.500  200  0.6862282  0.3615699
+  0.500  500  0.6827031  0.3542137
+  0.500  700  0.6814884  0.3517536
+  1.000    1  0.7452989  0.4797931
+  1.000   20  0.7006828  0.3883375
+  1.000   50  0.6949245  0.3765433
+  1.000  100  0.6935925  0.3740142
+  1.000  200  0.6921817  0.3712373
+  1.000  500  0.6918680  0.3706373
+  1.000  700  0.6906933  0.3681390
+
+Accuracy was used to select the optimal model using the largest value.
+The final values used for the model were sigma = 0.01 and C = 100.
+

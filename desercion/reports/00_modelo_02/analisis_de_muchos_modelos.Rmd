@@ -1,0 +1,1138 @@
+---
+title: "Analisis de Muchos Modelos"
+# params: 
+#   output_dir: "../../reports/"
+#params:
+#  encoding: "latin1"
+output:
+  pdf_document:
+    keep_tex: yes
+    #df_print: paged
+    latex_engine: pdflatex
+    pandoc_args: "--listings"
+  html_notebook:
+    code_folding: hide
+    number_sections: yes
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+    df_print: paged
+  html_document:
+    keep_md: TRUE
+    toc: true
+    theme: united
+    toc_float: yes
+    df_print: paged
+author: "Sebastian Jaremczuk"
+date: 2020-04-17
+# always_allow_html: true # esto es para que siempre permita html por los widgets pero no anda bien el kable ... usar webshot y phantomjs (tampo anduvo bien)
+---
+
+```{r include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, include = TRUE, message = FALSE, warning = FALSE)
+
+```
+
+
+```{r}
+# para que los widget los tome como printscreen cdo hace df
+# install.packages("webshot")
+# webshot::install_phantomjs()
+```
+
+
+
+```{r include=FALSE}
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+library(stringr)
+library(glue)
+
+```
+
+```{r include=FALSE}
+
+getwd()
+path_base = '/home/rstudio/desercion/'
+# saveRDS(config, paste0(path_base, config$outputs ,"config.rds"))
+config = read_rds(paste0(path_base, "outputs/00_modelo_02/config.rds"))
+```
+
+
+```{r include=FALSE}
+# cargo todas las librerias en la carpeta lib
+
+librerias.proyecto.actual = list.files(path = paste0(path_base, 'lib'))
+librerias.proyecto.actual = librerias.proyecto.actual[!(librerias.proyecto.actual %in% c("README.md","globals.R","helpers.R"))]
+librerias.proyecto.actual = str_c(paste0(path_base, 'lib/'), librerias.proyecto.actual, sep = '' )
+librerias.proyecto.actual = librerias.proyecto.actual[str_ends(librerias.proyecto.actual, pattern = ".R") | str_ends(librerias.proyecto.actual, pattern = ".r")]
+# cargo las librerias
+sapply(librerias.proyecto.actual, source)
+
+```
+
+
+### carga de datos
+
+
+```{r}
+datos_train_prep = read_rds(path = paste0(path_base, config$outputs, "baseline_2009_train_prep.rds") )
+datos_test_prep = read_rds(path = paste0(path_base, config$outputs, "baseline_2009_test_prep.rds") )
+
+```
+
+
+```{r}
+modelo_knn = read_rds(path = paste0(path_base, config$outputs, "modelo_knn.rds") )
+modelo_nb = read_rds(path = paste0(path_base, config$outputs, "modelo_nb.rds") )
+modelo_logistic = read_rds(path = paste0(path_base, config$outputs, "modelo_logistic.rds") )
+modelo_lda = read_rds(path = paste0(path_base, config$outputs, "modelo_lda.rds") )
+modelo_C50Tree = read_rds(path = paste0(path_base, config$outputs, "modelo_C50Tree.rds") )
+modelo_rf = read_rds(path = paste0(path_base, config$outputs, "modelo_rf.rds") )
+modelo_boost = read_rds(path = paste0(path_base, config$outputs, "modelo_boost.rds") )
+modelo_svmrad = read_rds(path = paste0(path_base, config$outputs, "modelo_svmrad.rds") )
+modelo_nnet = read_rds(path = paste0(path_base, config$outputs, "modelo_nnet.rds") )
+```
+
+```{r}
+ArchivoDeSalidaRDS = "modelos_reglog_svm_rf_datos01.rds"
+grid_modelos_4var = read_rds(path = paste0(path_base,config$outputs, ArchivoDeSalidaRDS))
+
+```
+
+```{r}
+
+
+grid_modelos_sinCicloLectivo = read_rds(path = paste0(path_base,config$outputs, "modelos_reglog_svm_rf_datos02.rds"))
+
+grid_modelos_sinCicloLectivo_knn_gbm = read_rds(path = paste0(path_base,config$outputs, "modelos_knn_gbm_datos03.rds"))
+
+grid_modelos_allvars_sinciclo = read_rds(path = paste0(path_base,config$outputs, "modelgrid_reglog_rf_gbm_c50_todasVariables_sinCicloLectivoCursada_datos05.rds"))
+
+```
+
+
+
+```{r}
+
+modelos <- list(KNN = modelo_knn, logistic = modelo_logistic,
+                LDA = modelo_lda, rf = modelo_rf, arbol = modelo_C50Tree,
+                boosting = modelo_boost, SVMradial = modelo_svmrad)
+
+#  NB = modelo_nb, 
+
+```
+
+
+
+```{r}
+library(caret)
+library(randomForest)
+library(ranger)
+library(gbm)
+library(klaR)
+library(MASS)
+library(C50)
+library(kernlab)
+library(nnet)
+library(modelgrid)
+
+
+predicciones <- extractPrediction(
+                  models = modelos,
+                  testX = datos_test_prep[,which(colnames(datos_test_prep) != "deserto")],
+                  testY = as.factor(datos_test_prep$deserto)
+                  )
+# predicciones %>% head()
+
+# predict(modelo_nb, newdata = datos_test_prep, type = "raw") # no anda bien naivebayes
+```
+
+# KNN
+
+## Modelar
+
+El modelo obtenido durante el entrenamiento es el siguiente:
+
+```{r}
+modelo_knn
+
+modelo_knn$results %>% 
+  kable(booktabs =T,
+             caption = "Resumen composición de cluster Kmeans según clase desertor",
+             label = "kmeans_2_resumen") %>%
+  kable_styling(latex_options = c("striped", "hold_position")) %>%
+  row_spec(0, bold = T, color = "white", background = "black", align = "c")
+  
+
+modelo_knn$bestTune
+
+
+```
+
+```{r}
+
+# REPRESENTACIÓN GRÁFICA
+# ==============================================================================
+ggplot(modelo_knn) +
+  scale_x_continuous(breaks = modelo_knn$results$k) +
+  labs(title = "Evolución del accuracy del modelo KNN", x = "K") +
+  geom_point(data = modelo_knn$results %>% dplyr::slice(which.max(Accuracy)),
+             color = "red") +
+  theme_bw()
+
+```
+
+Se puede decir que el mejor modelo obtenido en la etapa de entrenamiento es con k = 70 con un accuracy promedio de 81,27 %
+
+## describir el modelo
+
+El modelo de knn entrenado aporta un buen porcentaje de aciertos que supera ampliamente el nivel mínimo que corresponde a la clase mayoritaria. Sin embargo, una mejor manera de avaluarlo es utilizando el conjunto de test cuyas observaciones no han sido utilizadas hasta ahora.
+
+
+```{r}
+
+
+metodo = "KNN"
+
+cf = confusionMatrix(data = predicciones %>% filter(object == "KNN") %>% 
+                  filter(dataType == "Test") %>% pull(pred) ,
+                reference = datos_test_prep %>% pull(deserto),
+                positive = "1")
+
+tabla_confusionMatrix(cf, metodo)
+tabla_metricas(cf, metodo)
+
+
+
+
+```
+
+Como es de esperarse, los aciertos en el dataset de Test son menores que en el de entrenamiento. En este caso un 80.3 % el cual sigue siendo muy bueno y se encuentra por encima del nivel mínimo que corresponde a la clase maypritaria (56%)
+
+# Naive Bayes
+
+Este algoritmo calcula las probabilidades condicionales de que una observación pertenezca a cada una de las clases según los valores de los predictores. El algoritmo asume que las variables son independientes. De esta forma, se puede calcular la probabilidad cuando hay múltiples predictores multiplicando las probabilidades individuales de cada uno ya que se asume que son eventos independientes.
+
+## determinar Parametros del modelo
+
+Aquí existen 3 parámetros:
+
+* usekernel: se asigna FALSE para asumir una distribución de densidad gaussiana. Si fuera TRUE, se debería emplear un kernel para estimar la densidad.
+
+* fL: factor de corrección de Laplace, 0 para no aplicar ninguna corrección. En este caso no aplicaremos corrección.
+
+* adjust: 0 si usekernel es FALSE. Si usekernel es TRUE se completa con el parámetro correspondiente para la función density.
+
+
+## Modelar
+
+Durante el entrenamiento, el mejor ajuste fue con un 76.44% en Accuracy
+
+```{r}
+
+modelo_nb
+
+```
+
+## Describir el modelo
+
+Este modelo aparentemente es ligeramente menos efectivo que el KNN visto anteriormente. Para una evluación correcta, se realizan las predicciones sobre el datasets de test, arrojando los siguientes resultados:
+
+```{r}
+
+# unique(predicciones$object)
+
+metodo = "KNN"
+
+cf = confusionMatrix(data = predicciones %>% filter(object == "KNN") %>% 
+                  filter(dataType == "Test") %>% pull(pred) ,
+                reference = datos_test_prep %>% pull(deserto),
+                positive = "1")
+
+tabla_confusionMatrix(cf, metodo)
+tabla_metricas(cf, metodo)
+
+
+```
+
+
+
+
+# Regresión Logística
+
+permite estimar la probabilidad de una variable cualitativa binaria en función de una variable cuantitativa. Es un algoritmo que puede explicar bien la respuesta en función de sus predictores. La relación como lo dice su nombre es logarítmica, por lo que la relación entre las probabilidades y las variables o es lineal. El incremente en 1 unidad de una variable depende también del valor que tiene la variable en ese moemnto (es decir, la posición en la curva logarítmica donde se encuentra).
+
+## Determinar parámetros
+
+No existen hiperparámetros. Como en este caso se utiliza el paquete glm, hay que determinar que se realiza una una regresión logística indicando que el paquete utilice la familia binomial. 
+
+
+## Modelar
+
+Con la misma metodología que los modelos anteriores, durante el entrenamiento este modelo da como resultado un 83.7% de Accurac, el cual es muy prometedor. Ademas de estimar buen resultado, este modelo puede explicar el comportamiento de la variable respuesta en función de los predictores.
+
+Puede observarse que no todas las variables son significativas, lo que nos lleva a pensar en el aporte de la misma información por mas de una variable. 
+
+```{r}
+
+modelo_logistic
+
+summary(modelo_logistic$finalModel)
+
+# modelo_logistic$finalModel$coefficients %>% as.data.frame()
+
+```
+
+
+## Describir el modelo
+
+Se evalua el modelo entrenado con el conjunto de Test. En este caso, se puede observar que el modelo resulta ser bastante robusto obteniendo casi el mismo valor en Accuracy que el modelo entrenado, 83,54%. Es un buen modelo para tener en cuenta y analizarlo mas en profundidad.
+
+```{r}
+
+# unique(predicciones$object)
+
+metodo = "logistic"
+
+cf = confusionMatrix(data = predicciones %>% filter(object == "logistic") %>% 
+                  filter(dataType == "Test") %>% pull(pred) ,
+                reference = datos_test_prep %>% pull(deserto),
+                positive = "1")
+
+tabla_confusionMatrix(cf, metodo)
+tabla_metricas(cf, metodo)
+
+
+```
+
+
+
+
+# Analisis discriminante Lineal (LDA)
+
+Este algoritmo utiliza el teorema de Bayes, para estimar la probabilidad de que una observación pertenezca a cada una de las clases de la variable cualitativa según el valor de los predictores. Es un algoritmo explicativo y puede discriminar mas de dos clases, aunque este no sea el caso. La asignación de la clase calculando primero las probabilidades de pertenencia de la observación a cada una de las clases y luego asignadola la clase cuya probabilidad resulta la mas alta.
+
+
+## Determinar parametros del modelo
+
+No tiene
+
+## Modelar
+
+Utilizando el conjunto de entrenamiento, se obtiene una métrica accuracy relevante del 82.6%
+
+```{r}
+modelo_lda
+
+modelo_lda$finalModel
+
+```
+
+
+## Describir el modelo
+
+Evaluando el modelo con el conjunto de Test, el modelo aparenta ser bastante robusto obteniendo casi el mismo valor en Accuracy (82.26%) que en entrenamiento (82.6%).
+
+```{r}
+
+# unique(predicciones$object)
+
+metodo = "LDA"
+
+cf = confusionMatrix(data = predicciones %>% filter(object == "LDA") %>% 
+                  filter(dataType == "Test") %>% pull(pred) ,
+                reference = datos_test_prep %>% pull(deserto),
+                positive = "1")
+
+tabla_confusionMatrix(cf, metodo)
+tabla_metricas(cf, metodo)
+
+
+```
+
+
+# Arbol de Clasificación simple
+
+Se emplea el algoritmo de arboles de decisión C5.0. Los árboles son fáciles de interpretar aun cuando las relaciones entre predictores son complejas. Se pueden leer las ramas del arbol interpretarlas como reglas para clasificar a cualquier observación.
+
+## Determinar parámetros del modelo
+
+Si bien en estos algoritmos existen parámetros como cantidad de observaciones en los nodos finales, maximo nivel de profundidad, etc. En este caso no se empleará ninguno dejando que el agoritmo determine cual es mejor corte en los mismos.
+
+## Modelar
+
+Finalizado el entrenamiento, el Accuracy iinformado es del 83.31%.
+
+```{r}
+
+modelo_C50Tree
+
+summary(modelo_C50Tree$finalModel)
+
+```
+
+## Describir el modelo
+
+Evaluando el arbol con el conjunto de test, nuevamente se obtiene el mismo rendimiento que en entrenamiento.
+
+```{r}
+
+# unique(predicciones$object)
+
+metodo = "arbol"
+
+cf = confusionMatrix(data = predicciones %>% filter(object == "arbol") %>% 
+                  filter(dataType == "Test") %>% pull(pred) ,
+                reference = datos_test_prep %>% pull(deserto),
+                positive = "1")
+
+tabla_confusionMatrix(cf, metodo)
+tabla_metricas(cf, metodo)
+
+
+```
+
+
+
+# Random Forest
+Este algoritmo combina el proceso de bagging (bootstrap aggregation -muestras de observaciones con repetición-) con distintos modelos de arboles que toman features al azar. Al final promedia los modelos y consigue reducir la varianza.
+
+# Determinar parámetros del modelo
+
+se utiliza el paquete ranger en el cual se pueden definir los siguientes hiperparámetros:
+
+* mtry: número predictores seleccionados aleatoriamente en cada árbol. Se elijen para evaluar los valores: 3, 4, 5, 7.
+* min.node.size: tamaño mínimo que tiene que tener un nodo para poder ser dividido. Se elijen para evaluar los valores: 2, 3, 4, 5, 10, 15, 20, 30.
+* splitrule: criterio de división. El criterio elegido es "gini".
+
+Para este estudio, se determinó una grilla posible con todas las combinaciones posibles entre los valores determinados.
+
+El mejor modelo determinado queda con los siguientes parámetros:
+mtry = 5, splitrule = gini y min.node.size = 30
+
+```{r}
+
+modelo_rf
+
+```
+
+
+```{r}
+
+# REPRESENTACIÓN GRÁFICA
+# ==============================================================================
+ggplot(modelo_rf, highlight = TRUE) +
+  scale_x_continuous(breaks = 1:30) +
+  labs(title = "Evolución del accuracy del modelo Random Forest") +
+  guides(color = guide_legend(title = "mtry"),
+         shape = guide_legend(title = "mtry")) +
+  theme_bw()
+
+```
+
+
+
+## Modelar
+
+El mejor modelo determinado con los hiperparmétros queda guardado y se ejecuta nuevamente obteniendo un Accuracy del 84.3% en entrenamiento.
+
+
+```{r}
+
+modelo_rf$finalModel
+
+metodo = "RandomForest-Train"
+
+modelo_rf$finalModel$confusion.matrix %>% 
+  kable(booktabs =T,
+               caption = glue::glue("Matriz de Confusion del metodo: {metodo} "),
+               label = glue::glue("MatrizConf_{metodo}"),
+          align = "c") %>%
+    kable_styling(latex_options = c("striped", "hold_position")) %>%
+    row_spec(0, bold = T, color = "white", background = "black", align = "c") %>% 
+    kableExtra::add_header_above(c("Prediccion","Referencia"," "))
+
+
+print("Accuracy:")
+1- modelo_rf$finalModel$prediction.error
+
+# (1589+1101)/(1589 + 202 + 299 + 1101)
+
+```
+
+## Describir el modelo
+
+se realiza la evaluacion del modelo con el conjunto de Test. En esta corrida se obtiene un accuracy de 83.3% que resulta ser el mejor de los modelos hasta el momento. Muy cerca de los Valores dl entrenamiento por lo que aparenta ser un modelo bastante robusto.
+
+```{r}
+
+# unique(predicciones$object)
+
+metodo = "rf"
+
+cf = confusionMatrix(data = predicciones %>% filter(object == "rf") %>% 
+                  filter(dataType == "Test") %>% pull(pred) ,
+                reference = datos_test_prep %>% pull(deserto),
+                positive = "1")
+
+tabla_confusionMatrix(cf, metodo)
+tabla_metricas(cf, metodo)
+
+```
+
+
+
+
+# Gradient Boosting
+
+Boosting es una de las estrategias que hay de ensemble que se pueden aplicar a muchos métodos, entre ellos los árboles. Boosting ajusta de forma secuencia múltiples modelos en cadena. Cada nuevo modelo emplea información del modelo anterior para aprender de sus errores, mejorando iteración a iteración. Utiliza todos los features.
+
+# Determinar parametros del modelo
+
+Estos métodos se caracterizan por tener muchos hiperparámetros y parámetros. En este caso se utiliza el paquete gbm y dentro de el se pueden emplear los siguientes:
+
+* n.trees: número de iteraciones del algoritmo de boosting (cantidad de modelos que forman el ensemble). Cuanto mas grande, mas riesgo de sobreajuste. Se prueban los siguientes valores: 100, 500, 1000, 2000.
+
+* interaction.depth: complejidad de los árboles (cantidad total de divisiones que tiene el árbol). Se preuban los sigientes valores: 1, 5, 9.
+
+shrinkage: (learning rate) controla la influencia que tiene cada modelo sobre el conjunto del ensemble (aprendizaje). Los valores que se probaron son: 0.001, 0.01, 0.1.
+
+n.minobsinnode: número mínimo de observaciones que debe tener un nodo para poder ser dividido. Se probaron los siguientes valores: 2, 10, 20.
+
+distribution: determina la función de coste (loss function). Se utiliza Adaboost.
+
+bag.fraction (subsampling fraction): Si es de 1, se emplea Gradient Boosting, si es menor que 1, se emplea Stochastic Gradient Boosting. Por defecto su valor es de 0.5. Se utiliza valor or defecto.
+
+
+Se genera una grilla que contempla todas las combinaciones posibles de los valores mencionados anteriormente. Por cada combinación se generan una cantidad igual a particiones*repeticiones.
+
+Todos los resultados dan muy similar. La combinación de hiperparámetros por muy poco y en promedio sobrepasa al resto, es:
+n.trees = 500, interaction.depth = 9, shrinkage = 0.01 y  n.minobsinnode = 10
+
+```{r}
+# unique(predicciones$object)
+
+modelo_boost
+```
+
+
+```{r}
+# REPRESENTACIÓN GRÁFICA
+# ==============================================================================
+ggplot(modelo_boost, highlight = TRUE) +
+  labs(title = "Evolución del accuracy del modelo Gradient Boosting") +
+    guides(color = guide_legend(title = "shrinkage"),
+           shape = guide_legend(title = "shrinkage")) +
+  theme_bw() +
+  coord_cartesian(ylim = c(0.8,0.87)) +
+  theme(legend.position = "bottom")
+```
+
+
+## Modelar
+
+El modelo entrenado tiene un Accuracy del 92%. El mejor modelo hasta ahora, aunque puede ser que este un poco sobreajustado.
+
+```{r}
+
+# unique(predicciones$object)
+
+modelo_boost
+
+metodo = "boosting"
+
+cf = confusionMatrix(data = predicciones %>% filter(object == "boosting") %>% 
+                  filter(dataType == "Training") %>% pull(pred) ,
+                reference = datos_train_prep %>% pull(deserto),
+                positive = "1")
+
+metodo = "GradientBoosting-Train"
+tabla_confusionMatrix(cf, metodo)
+tabla_metricas(cf, metodo)
+
+
+
+```
+
+
+
+
+## Describir el modelo
+
+Se evalua el modelo anteiror con el conjunto de Test. Como se observa y se habia mencionado anteirormente, el modelo evaluado en el conjunto de test tiene un Accuracy de 83.83%.
+Mayor que el promedio del entrenamiento y menor que el obtenido usando los mejores paramentros con todo el conjunto de train sin validación.
+
+```{r}
+
+metodo = "boosting"
+
+cf = confusionMatrix(data = predicciones %>% filter(object == "boosting") %>% 
+                  filter(dataType == "Test") %>% pull(pred) ,
+                reference = datos_test_prep %>% pull(deserto),
+                positive = "1")
+
+tabla_confusionMatrix(cf, metodo)
+tabla_metricas(cf, metodo)
+
+
+```
+
+# SVM
+
+Este algoritmo se basa en la separacion de las clases con hiperplanos y utilizando kernels para aumentar las dimensiones.
+
+## Determinar parametros del modelo
+
+Se utiliza el paquete kernlab que tiene 2 hiperparámetros:
+
+* sigma: coeficiente del kernel radial. Se preuban los valores: 0.001, 0.01, 0.1, 0.5, 1.
+
+* C: penalización por violaciones del margen del hiperplano. se preuabn los valores: 1 , 20, 50, 100, 200, 500, 700.
+
+Los mejores resultados a traves de las iteraciones de los modelos generados fue con los valores: 
+sigma = 0.001 y C = 100. Los mismos se contrastan con los valores de Accuracy obtenidos en cada modelo y cuya evolución puede verse en el grafico x.
+
+```{r}
+
+modelo_svmrad
+
+```
+
+
+
+```{r}
+
+# REPRESENTACIÓN GRÁFICA
+# ==============================================================================
+ggplot(modelo_svmrad, highlight = TRUE) +
+  labs(title = "Evolución del accuracy del modelo SVM Radial") +
+  theme_bw()
+
+```
+
+
+
+## Modelar
+
+En entrenamiento se consigue un Accuracy de 83.79% (con validation) y 85.11% sin validation.
+
+```{r}
+
+modelo_svmrad$finalModel
+
+1 - 0.148856
+
+
+# unique(predicciones$object)
+
+metodo = "SVMradial"
+
+cf = confusionMatrix(data = predicciones %>% filter(object == "SVMradial") %>% 
+                  filter(dataType == "Training") %>% pull(pred) ,
+                reference = datos_train_prep %>% pull(deserto),
+                positive = "1")
+
+metodo = "SVMradial-Train"
+tabla_confusionMatrix(cf, metodo)
+tabla_metricas(cf, metodo)
+
+
+```
+
+
+##Descripción del modelo
+
+Evaluando en el conjinto de Test se obtiene 84.2% Accuracy.
+
+```{r}
+
+metodo = "SVMradial"
+
+cf = confusionMatrix(data = predicciones %>% filter(object == "SVMradial") %>% 
+                  filter(dataType == "Test") %>% pull(pred) ,
+                reference = datos_test_prep %>% pull(deserto),
+                positive = "1")
+
+tabla_confusionMatrix(cf, metodo)
+tabla_metricas(cf, metodo)
+
+
+```
+
+
+# Modelos con Dataset de variables Reducido
+
+Se pueden utilizar todas las variables, pero scmo se mencionó anteriormente durante el entrenamiento se comprobaron mejores resultados con datasets con menos variables.
+En este caso son 10 variables:
+
+[1] "ciclo_lectivo_de_cursada"    "tipo_de_aprobacion_libre"    "Turno_Noche"                
+ [4] "tipo_de_aprobacion_no_firmo" "Aprobado"                    "Turno_Tarde"                
+ [7] "Nota_max_prom"               "tipo_de_aprobacion_firmo"    "Turno_Manana"               
+[10] "cant_resursada_regular"   
+
+
+Por lo que se seleccionaron 3 métodos, para realizar todo el proceso anterior nuevamente pero solamene teniendo en cuenta estos predictores. de esta forma y evaluandolo con el conjunto de Test se comprobará que es mejor.
+
+Los modelos seleccionados para estas pruebas son: Regresión logística, RandomForest y SVM.
+
+
+## Determinar parámetros
+
+Las grillas de preubas de parámetros es igual para cada modelo que los mencionados anteriormente las secciones de cada modelo por separado.
+
+Se detallan los nuevos parámetros óptimos encontrados:
+RandomForest
+mtry = 3, splitrule = gini y min.node.size = 30
+Reg_logistica
+(sin parametros)
+SVM
+sigma = 0.01 y C = 700
+
+
+
+```{r}
+
+names(grid_modelos_4var$model_fits)
+
+grid_modelos_4var <- grid_modelos_4var %>%
+                remove_model(model_name = "SVM")
+
+grid_modelos_4var$model_fits
+
+```
+
+## Modelar
+
+Los valores de Accuracy obtenidos en entrenamiento:
+
+Random Forest
+0.8434285 (con validation)
+0.8442495 (usando todo train)
+Reg_logistica
+0.8313254
+0.8345
+
+```{r}
+
+# grid_modelos_4var$model_fits
+
+predicciones2 <- extractPrediction(
+                  models = grid_modelos_4var$model_fits,
+                  testX = datos_test_prep[,which(colnames(datos_test_prep) != "deserto")],
+                  testY = as.factor(datos_test_prep$deserto)
+                  )
+
+
+# table(is.na(predicciones2$pred))
+
+
+```
+
+
+
+```{r}
+
+grid_modelos_4var$model_fits$RandomForest$finalModel$confusion.matrix
+
+1- grid_modelos_4var$model_fits$RandomForest$finalModel$prediction.error
+
+```
+
+```{r}
+grid_modelos_4var$model_fits$Reg_logistica$finalModel
+
+unique(predicciones2$object)
+
+metodo = "Reg_logistica"
+
+cf = confusionMatrix(data = predicciones2 %>% filter(object == "Reg_logistica") %>% 
+                  filter(dataType == "Training") %>% pull(pred) ,
+                reference = datos_train_prep %>% pull(deserto),
+                positive = "1")
+
+metodo = "Reg_logistica-Training"
+tabla_confusionMatrix(cf, metodo)
+tabla_metricas(cf, metodo)
+
+```
+
+## describir el modelo
+
+con Test
+
+```{r}
+
+# unique(predicciones2$dataType)
+
+metodo = "RandomForest"
+
+length(predicciones2 %>% filter(object == "RandomForest") %>% 
+                  filter(dataType == "Test") %>% pull(pred))
+
+cf = confusionMatrix(data = predicciones2 %>% filter(object == "RandomForest") %>% 
+                  filter(dataType == "Test") %>% pull(pred) ,
+                reference = datos_test_prep %>% pull(deserto),
+                positive = "1")
+
+tabla_confusionMatrix(cf, metodo)
+tabla_metricas(cf, metodo)
+
+```
+
+
+```{r}
+
+# unique(predicciones2$dataType)
+
+metodo = "Reg_logistica"
+
+length(predicciones2 %>% filter(object == "Reg_logistica") %>% 
+                  filter(dataType == "Test") %>% pull(pred))
+
+cf = confusionMatrix(data = predicciones2 %>% filter(object == "RandomForest") %>% 
+                  filter(dataType == "Test") %>% pull(pred) ,
+                reference = datos_test_prep %>% pull(deserto),
+                positive = "1")
+
+tabla_confusionMatrix(cf, metodo)
+tabla_metricas(cf, metodo)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+# Modelos con Dataset sin variable ciclo_lectivo_de_cursada
+
+En este caso, se generan algunos modelos pero usando el dataset sin la variable que mayor relevancia tomaba para los modelos anteriores (sin "ciclo_lectivo_de_cursada")
+
+Los modelos seleccionados para estas pruebas son: Regresión logística, RandomForest, knn y GradientBoosting.
+
+```{r}
+
+
+
+
+grid_modelos_sinCicloLectivo <- grid_modelos_sinCicloLectivo %>%
+                remove_model(model_name = "SVM")
+
+
+
+grid_modelos_sinCicloLectivo_knn_gbm <- grid_modelos_sinCicloLectivo_knn_gbm %>%
+                remove_model(model_name = "KNN_3")
+
+
+names(grid_modelos_sinCicloLectivo$model_fits)
+names(grid_modelos_sinCicloLectivo_knn_gbm$model_fits)
+
+
+grid_modelos_sinCicloLectivo_knn_gbm$model_fits
+
+
+grid_modelos_sinCicloLectivo$model_fits
+```
+
+
+## Determinar parámetros
+
+Las grillas de preubas de parámetros es igual para cada modelo que los mencionados anteriormente las secciones de cada modelo por separado.
+
+Se detallan los nuevos parámetros óptimos encontrados:
+RandomForest
+mtry = 3, splitrule = gini and min.node.size = 30
+Reg_logistica
+(sin parametros)
+gbm
+n.trees = 2000, interaction.depth = 2, shrinkage = 0.01 y n.minobsinnode = 15
+
+
+```{r}
+
+# names(grid_modelos_4var$model_fits)
+# 
+# grid_modelos_4var <- grid_modelos_4var %>%
+#                 remove_model(model_name = "SVM")
+
+grid_modelos_sinCicloLectivo$model_fits
+grid_modelos_sinCicloLectivo_knn_gbm$model_fits
+
+
+```
+
+
+
+```{r}
+
+# grid_modelos_4var$model_fits
+
+predicciones3 <- extractPrediction(
+                  models = list( RandomForest_3= grid_modelos_sinCicloLectivo$model_fits$RandomForest,
+                                 Reg_Logistica_3= grid_modelos_sinCicloLectivo$model_fits$Reg_logistica),
+                  testX = datos_test_prep[,which(colnames(datos_test_prep) != "deserto")],
+                  testY = as.factor(datos_test_prep$deserto)
+                  )
+
+predicciones4 <- extractPrediction(
+                  models = list( #KNN_3 = grid_modelos_sinCicloLectivo_knn_gbm$model_fits$KNN_3,
+                                 GBM_3 = grid_modelos_sinCicloLectivo_knn_gbm$model_fits$GradienBoosting_3),
+                  testX = datos_test_prep[,which(colnames(datos_test_prep) != "deserto")],
+                  testY = as.factor(datos_test_prep$deserto)
+                  )
+
+# table(is.na(predicciones3$pred))
+
+
+```
+
+
+
+## Modelar
+
+Los valores de Accuracy obtenidos en entrenamiento:
+
+Random Forest
+0.7720178 (con validation)
+0.7731119 (usando todo train)
+Reg_logistica
+0.7532915
+0.7558759
+gbm
+0.7510579
+0.7919148
+
+
+
+```{r}
+
+grid_modelos_sinCicloLectivo$model_fits$RandomForest$finalModel$confusion.matrix
+
+1- grid_modelos_sinCicloLectivo$model_fits$RandomForest$finalModel$prediction.error
+
+```
+
+```{r}
+grid_modelos_sinCicloLectivo$model_fits$Reg_logistica$finalModel
+
+unique(predicciones3$object)
+
+metodo = "Reg_Logistica_3"
+
+cf = confusionMatrix(data = predicciones3 %>% filter(object == "Reg_Logistica_3") %>% 
+                  filter(dataType == "Training") %>% pull(pred) ,
+                reference = datos_train_prep %>% pull(deserto),
+                positive = "1")
+
+metodo = "Reg_logistica_3-Training"
+tabla_confusionMatrix(cf, metodo)
+tabla_metricas(cf, metodo)
+
+```
+
+
+
+```{r}
+grid_modelos_sinCicloLectivo_knn_gbm$model_fits$GradienBoosting_3$finalModel
+
+unique(predicciones4$object)
+
+metodo = "GBM_3"
+
+cf = confusionMatrix(data = predicciones4 %>% filter(object == "GBM_3") %>% 
+                  filter(dataType == "Training") %>% pull(pred) ,
+                reference = datos_train_prep %>% pull(deserto),
+                positive = "1")
+
+metodo = "GBM_3-Training"
+tabla_confusionMatrix(cf, metodo)
+tabla_metricas(cf, metodo)
+```
+
+
+
+## describir el modelo
+
+con Test
+
+RandomFores
+0.7717630
+Reg_Logistica
+0.7439649
+gbm
+0.6949525
+
+
+```{r}
+
+# unique(predicciones3$object)
+
+metodo = "RandomForest_3"
+
+
+cf = confusionMatrix(data = predicciones3 %>% filter(object == "RandomForest_3") %>% 
+                  filter(dataType == "Test") %>% pull(pred) ,
+                reference = datos_test_prep %>% pull(deserto),
+                positive = "1")
+
+tabla_confusionMatrix(cf, metodo)
+tabla_metricas(cf, metodo)
+
+```
+
+
+```{r}
+
+# unique(predicciones2$dataType)
+
+metodo = "Reg_Logistica_3"
+
+cf = confusionMatrix(data = predicciones3 %>% filter(object == "Reg_Logistica_3") %>% 
+                  filter(dataType == "Test") %>% pull(pred) ,
+                reference = datos_test_prep %>% pull(deserto),
+                positive = "1")
+
+tabla_confusionMatrix(cf, metodo)
+tabla_metricas(cf, metodo)
+
+```
+
+
+
+```{r}
+
+metodo = "GBM_3"
+
+
+cf = confusionMatrix(data = predicciones4 %>% filter(object == "GBM_3") %>% 
+                  filter(dataType == "Test") %>% pull(pred) ,
+                reference = datos_test_prep %>% pull(deserto),
+                positive = "1")
+
+tabla_confusionMatrix(cf, metodo)
+tabla_metricas(cf, metodo)
+
+```
+
+# modelos que usan todas las variables menos la mas importante
+
+```{r}
+
+grid_modelos_allvars_sinciclo = read_rds(path = paste0(path_base,config$outputs, "modelgrid_reglog_rf_gbm_c50_todasVariables_sinCicloLectivoCursada_datos05.rds"))
+
+
+predicciones5 <- extractPrediction(
+                  models = grid_modelos_allvars_sinciclo$model_fits,
+                  testX = datos_test_prep[,which(colnames(datos_test_prep) != "deserto")],
+                  testY = as.factor(datos_test_prep$deserto)
+                  )
+
+modelo_svm_sinciclo = read_rds(path = paste0(path_base,config$outputs, "modelos_svm_datos_07.rds"))
+
+variables_predictoras = colnames(modelo_svm_sinciclo$trainingData)
+
+predicciones6 <- extractPrediction(
+                  models = list(SVM_5 = modelo_svm_sinciclo),
+                  testX = datos_test_prep[,which(colnames(datos_test_prep) %in% c(variables_predictoras))],
+                  testY = as.factor(datos_test_prep$deserto)
+                  )
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+# COMPARAR MODELOS
+
+para compara modelos se unen los datsets de predicciones
+
+```{r}
+
+pred =
+  dplyr::bind_rows(
+    predicciones %>% mutate_if(is.factor, as.character),
+    predicciones2 %>% mutate_if(is.factor, as.character),
+    predicciones3 %>% mutate_if(is.factor, as.character),
+    # predicciones4 %>% mutate_if(is.factor, as.character)
+    predicciones5 %>% mutate_if(is.factor, as.character),
+    predicciones6 %>% mutate_if(is.factor, as.character)
+  )
+
+
+# saveRDS(pred, file = paste0(path_base, config$outputs ,"pred.rds"))
+
+
+
+```
+
+
+```{r}
+metricas_predicciones <- 
+  pred %>%
+  filter(object != "NNET") %>% 
+   mutate(acierto = ifelse(obs == pred, TRUE, FALSE)) %>%
+   group_by(object, dataType) %>%
+   summarise(accuracy = mean(acierto))
+
+metricas_predicciones %>%
+  spread(key = dataType, value = accuracy) %>%
+  arrange(desc(Test)) %>% 
+  kable(booktabs =T,
+             caption = "Resumen comparativo de algunos los modelos empleados",
+             label = "cuadro_comparativo-modelos") %>%
+  kable_styling(latex_options = c("striped", "hold_position")) %>%
+  row_spec(0, bold = T, color = "white", background = "black", align = "c")
+
+
+```
+
+
+
+
+```{r}
+
+# gg_aux =
+ggplot(data = metricas_predicciones,
+       aes(x = reorder(object, accuracy), y = accuracy,
+           color = dataType, label = round(accuracy, 2))) +
+  geom_point(size = 7, shape = 22, alpha = 0.5, aes(fill = dataType)) +
+  # geom_point(size = 5, shape = 22) +
+  # geom_bar(stat = "identity", position = "dodge2", aes(fill = NA) ) +
+  scale_color_manual(values = c("darkblue", "darkgreen")) +
+  scale_fill_manual(values = c("darkblue", "darkgreen")) +
+  # geom_text(color = "black", size = 3 ) +
+  geom_text(size = 3, position = position_nudge(y = if_else(metricas_predicciones$dataType == "Test", -0.02, 0.02)), mapping = aes(label= round(accuracy,2))) +
+  # geom_label(size = 3, position = position_nudge(y = if_else(metricas_predicciones$dataType == "Test", -0.05, 0.05)), mapping = aes(label= round(accuracy,2))) +
+  # scale_y_continuous(limits = c(0, 1)) +
+  # Accuracy basal
+  geom_hline(yintercept = 0.56, linetype = "dashed") +
+  annotate(geom = "text", y = 0.57, x = 6, label = "Accuracy clase mayoritaria 0.56", angle = 90) +
+  coord_flip() +
+  labs(title = "Accuracy de entrenamiento y test", 
+       x = "modelo") +
+  theme_bw() + 
+  theme(legend.position = "bottom")
+# agrego los labels (los valores son relativos a el punto en cuestion)
+# gg_aux +
+#     geom_label(size = 3,  nudge_y = if_else(gg_aux$data$dataType == "Test", -0.05, 0.05 ), aes(label= round(accuracy,2)))
+
+
+
+```
+

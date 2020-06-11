@@ -1,0 +1,66 @@
+[1] "2020-05-25 01:44:09"
+[1] "2020-05-25 01:44:13"
+Linear Discriminant Analysis 
+
+3191 samples
+  24 predictor
+   2 classes: '0', '1' 
+
+No pre-processing
+Resampling: Cross-Validated (10 fold, repeated 5 times) 
+Summary of sample sizes: 2872, 2872, 2872, 2872, 2872, 2872, ... 
+Resampling results:
+
+  Accuracy   Kappa    
+  0.8260155  0.6398971
+
+Call:
+lda(x, grouping = y)
+
+Prior probabilities of groups:
+        0         1 
+0.5612661 0.4387339 
+
+Group means:
+  Turno_Manana tipo_de_aprobacion_libre tipo_de_aprobacion_cambio_curso tipo_de_aprobacion_promociono edad_al_ingreso
+0    0.2097784               -0.2459785                      0.09109986                     0.4016675      -0.1372097
+1   -0.2683665                0.3146768                     -0.11654275                    -0.5138475       0.1755304
+  tipo_de_aprobacion_no_firmo ciclo_lectivo_de_cursada tipo_de_aprobacion_firmo cant_resursada_regular
+0                  -0.1000246                0.4927644                0.3712214            -0.03335925
+1                   0.1279601               -0.6303865               -0.4748983             0.04267602
+  cant_recursada_regular_No_Recurso cant_recursada_regular_Recurso1vez cant_recursada_regular_Recurso2vez
+0                         0.3497319                         0.02128663                        -0.03005750
+1                        -0.4474070                        -0.02723168                         0.03845213
+  cant_recursada_regular_Recurso3vez cant_recursada_regular_Recurso4vez Turno_Tarde Turno_Noche   Aprobado Promociono
+0                        -0.04839841                        -0.06875474   0.1027169  0.09344717  0.3723704  0.4021276
+1                         0.06191539                         0.08795696  -0.1314042 -0.11954563 -0.4763681 -0.5144361
+  noAprobado        Nota Nota_max_prom EsTecnico_X1 EsTecnico_SinDato    Sexo_M
+0  0.2386729  0.02059742     0.1021503    0.2741485        0.09547739 0.8559464
+1 -0.3053308 -0.02634998    -0.1306795    0.2392857        0.17928571 0.8764286
+
+Coefficients of linear discriminants:
+                                           LD1
+Turno_Manana                       -0.51686683
+tipo_de_aprobacion_libre            0.39356620
+tipo_de_aprobacion_cambio_curso     0.11497066
+tipo_de_aprobacion_promociono      -0.18238389
+edad_al_ingreso                     0.04520862
+tipo_de_aprobacion_no_firmo         0.05950636
+ciclo_lectivo_de_cursada           -0.90702914
+tipo_de_aprobacion_firmo           -1.38428998
+cant_resursada_regular              0.14511203
+cant_recursada_regular_No_Recurso   2.04623235
+cant_recursada_regular_Recurso1vez  0.57502616
+cant_recursada_regular_Recurso2vez  0.33487177
+cant_recursada_regular_Recurso3vez  0.24802792
+cant_recursada_regular_Recurso4vez  0.22666381
+Turno_Tarde                        -0.29385173
+Turno_Noche                        -0.41360189
+Aprobado                           -0.26362500
+Promociono                         -0.26289617
+noAprobado                         -0.12606049
+Nota                                0.11137596
+Nota_max_prom                      -0.05747004
+EsTecnico_X1                        0.00198744
+EsTecnico_SinDato                   0.20664635
+Sexo_M                              0.01592992

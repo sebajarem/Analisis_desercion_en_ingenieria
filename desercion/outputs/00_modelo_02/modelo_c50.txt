@@ -1,0 +1,80 @@
+[1] "2020-05-24 23:59:52"
+[1] "2020-05-25 00:00:01"
+Single C5.0 Tree 
+
+3191 samples
+  24 predictor
+   2 classes: '0', '1' 
+
+No pre-processing
+Resampling: Cross-Validated (10 fold, repeated 5 times) 
+Summary of sample sizes: 2872, 2872, 2872, 2872, 2872, 2872, ... 
+Resampling results:
+
+  Accuracy   Kappa    
+  0.8331573  0.6590582
+
+
+Call:
+C50:::C5.0.default(x = x, y = y, weights = wts)
+
+
+C5.0 [Release 2.07 GPL Edition]  	Mon May 25 03:00:01 2020
+-------------------------------
+
+Class specified by attribute `outcome'
+
+Read 3191 cases (25 attributes) from undefined.data
+
+Decision tree:
+
+ciclo_lectivo_de_cursada <= -0.1784513:
+:...Aprobado <= 2.816905: 1 (889/45)
+:   Aprobado > 2.816905: 0 (26/2)
+ciclo_lectivo_de_cursada > -0.1784513:
+:...Aprobado > 0.1499444: 0 (819/56)
+    Aprobado <= 0.1499444:
+    :...tipo_de_aprobacion_libre <= -0.1299698:
+        :...tipo_de_aprobacion_firmo <= -1.007704: 1 (64/26)
+        :   tipo_de_aprobacion_firmo > -1.007704: 0 (834/150)
+        tipo_de_aprobacion_libre > -0.1299698:
+        :...noAprobado > 0.6500659: 0 (56/17)
+            noAprobado <= 0.6500659:
+            :...Aprobado <= -0.5414899: 1 (281/94)
+                Aprobado > -0.5414899:
+                :...cant_recursada_regular_Recurso4vez > -0.2406067: 1 (40/12)
+                    cant_recursada_regular_Recurso4vez <= -0.2406067:
+                    :...tipo_de_aprobacion_libre > 1.48903: 1 (36/12)
+                        tipo_de_aprobacion_libre <= 1.48903:
+                        :...EsTecnico_SinDato <= 0: 0 (124/40)
+                            EsTecnico_SinDato > 0: 1 (22/8)
+
+
+Evaluation on training data (3191 cases):
+
+	    Decision Tree   
+	  ----------------  
+	  Size      Errors  
+
+	    11  462(14.5%)   <<
+
+
+	   (a)   (b)    <-classified as
+	  ----  ----
+	  1594   197    (a): class 0
+	   265  1135    (b): class 1
+
+
+	Attribute usage:
+
+	100.00%	ciclo_lectivo_de_cursada
+	100.00%	Aprobado
+	 45.66%	tipo_de_aprobacion_libre
+	 28.14%	tipo_de_aprobacion_firmo
+	 17.52%	noAprobado
+	  6.96%	cant_recursada_regular_Recurso4vez
+	  4.58%	EsTecnico_SinDato
+
+
+Time: 0.0 secs
+
